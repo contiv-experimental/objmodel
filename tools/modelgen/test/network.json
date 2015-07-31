@@ -1,0 +1,36 @@
+{
+	"name": "contivModel",
+	"objects": [
+		{
+			"name": "network",
+			"type": "object",
+			"key": "string",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"isPublic": {
+					"type": "bool"
+				},
+				"isPrivate": {
+					"type": "bool"
+				},
+				"encap": {
+					"type": "string"
+				},
+				"subnet": {
+					"type": "string"
+				},
+				"labels": {
+					"type": "array",
+					"items": "string"
+				}
+			},
+			"links": {
+				"tenant": {
+					"ref": "tenant"
+				}
+			}
+		}
+	]
+}
