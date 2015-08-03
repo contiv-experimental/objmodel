@@ -53,6 +53,7 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	goStr = goStr + fmt.Sprintf("type Callbacks interface {\n")
 	for _, obj := range s.Objects {
 		goStr = goStr + fmt.Sprintf("	%sCreate(%s *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
+		goStr = goStr + fmt.Sprintf("	%sUpdate(%s, params *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
 		goStr = goStr + fmt.Sprintf("	%sDelete(%s *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
 	}
 	goStr = goStr + fmt.Sprintf("}\n\n")
@@ -270,18 +271,28 @@ func httpDelete{{initialCap .}}(w http.ResponseWriter, r *http.Request, vars map
 
 // Create a {{.}} object
 func Create{{initialCap .}}(obj *{{initialCap .}}) error {
-	// save it in cache
-	collections.{{.}}s[obj.Key] = obj
+	// Check if object already exists
+	if collections.{{.}}s[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.{{initialCap .}}Update(collections.{{.}}s[obj.Key], obj)
+		if err != nil {
+			log.Errorf("{{initialCap .}}Update retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.{{.}}s[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.{{initialCap .}}Create(obj)
-	if err != nil {
-		log.Errorf("{{initialCap .}}Create retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.{{initialCap .}}Create(obj)
+		if err != nil {
+			log.Errorf("{{initialCap .}}Create retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving {{.}} %s to db. Err: %v", obj.Key, err)
 		return err

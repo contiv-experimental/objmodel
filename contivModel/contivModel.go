@@ -5,232 +5,243 @@
 package contivModel
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
-
-	log "github.com/Sirupsen/logrus"
+	"encoding/json"
 	"github.com/contiv/objmodel/objdb/modeldb"
 	"github.com/gorilla/mux"
+	log "github.com/Sirupsen/logrus"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
 
 type App struct {
-	Key        string      `json:"key,omitempty"`
-	AppName    string      `json:"appName,omitempty"`
-	TenantName string      `json:"tenantName,omitempty"`
-	LinkSets   AppLinkSets `json:"link-sets,omitempty"`
-	Links      AppLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	AppName	string		`json:"appName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	LinkSets	AppLinkSets		`json:"link-sets,omitempty"`
+	Links	AppLinks		`json:"links,omitempty"`
 }
 
 type AppLinkSets struct {
-	Services map[string]modeldb.Link `json:"services,omitempty"`
+	Services	map[string]modeldb.Link		`json:"services,omitempty"`
 }
 
 type AppLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
 type EndpointGroup struct {
-	Key         string                `json:"key,omitempty"`
-	GroupName   string                `json:"groupName,omitempty"`
-	TenantName  string                `json:"tenantName,omitempty"`
-	NetworkName string                `json:"networkName,omitempty"`
-	Policies    []string              `json:"policies,omitempty"`
-	LinkSets    EndpointGroupLinkSets `json:"link-sets,omitempty"`
-	Links       EndpointGroupLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	GroupName	string		`json:"groupName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	NetworkName	string		`json:"networkName,omitempty"`
+	Policies	[]string		`json:"policies,omitempty"`
+	LinkSets	EndpointGroupLinkSets		`json:"link-sets,omitempty"`
+	Links	EndpointGroupLinks		`json:"links,omitempty"`
 }
 
 type EndpointGroupLinkSets struct {
-	Services map[string]modeldb.Link `json:"services,omitempty"`
-	Policies map[string]modeldb.Link `json:"policies,omitempty"`
+	Services	map[string]modeldb.Link		`json:"services,omitempty"`
+	Policies	map[string]modeldb.Link		`json:"policies,omitempty"`
 }
 
 type EndpointGroupLinks struct {
-	Tenant  modeldb.Link `json:"tenant,omitempty"`
-	Network modeldb.Link `json:"network,omitempty"`
+	Network	modeldb.Link		`json:"network,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
 type Network struct {
-	Key         string          `json:"key,omitempty"`
-	Subnet      string          `json:"subnet,omitempty"`
-	NetworkName string          `json:"networkName,omitempty"`
-	TenantName  string          `json:"tenantName,omitempty"`
-	IsPublic    bool            `json:"isPublic,omitempty"`
-	IsPrivate   bool            `json:"isPrivate,omitempty"`
-	Encap       string          `json:"encap,omitempty"`
-	LinkSets    NetworkLinkSets `json:"link-sets,omitempty"`
-	Links       NetworkLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	IsPublic	bool		`json:"isPublic,omitempty"`
+	IsPrivate	bool		`json:"isPrivate,omitempty"`
+	Encap	string		`json:"encap,omitempty"`
+	Subnet	string		`json:"subnet,omitempty"`
+	NetworkName	string		`json:"networkName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	LinkSets	NetworkLinkSets		`json:"link-sets,omitempty"`
+	Links	NetworkLinks		`json:"links,omitempty"`
 }
 
 type NetworkLinkSets struct {
-	Services map[string]modeldb.Link `json:"services,omitempty"`
+	Services	map[string]modeldb.Link		`json:"services,omitempty"`
 }
 
 type NetworkLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
 type Policy struct {
-	Key        string         `json:"key,omitempty"`
-	PolicyName string         `json:"policyName,omitempty"`
-	TenantName string         `json:"tenantName,omitempty"`
-	Rules      []string       `json:"rules,omitempty"`
-	LinkSets   PolicyLinkSets `json:"link-sets,omitempty"`
-	Links      PolicyLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	PolicyName	string		`json:"policyName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	Rules	[]string		`json:"rules,omitempty"`
+	LinkSets	PolicyLinkSets		`json:"link-sets,omitempty"`
+	Links	PolicyLinks		`json:"links,omitempty"`
 }
 
 type PolicyLinkSets struct {
-	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
+	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
 }
 
 type PolicyLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
 type Service struct {
-	Key            string          `json:"key,omitempty"`
-	EndpointGroups []string        `json:"endpointGroups,omitempty"`
-	Networks       []string        `json:"networks,omitempty"`
-	VolumeProfile  string          `json:"volumeProfile,omitempty"`
-	TenantName     string          `json:"tenantName,omitempty"`
-	Memory         string          `json:"memory,omitempty"`
-	Command        string          `json:"command,omitempty"`
-	Environment    []string        `json:"environment,omitempty"`
-	Scale          int64           `json:"scale,omitempty"`
-	ServiceName    string          `json:"serviceName,omitempty"`
-	AppName        string          `json:"appName,omitempty"`
-	ImageName      string          `json:"imageName,omitempty"`
-	Cpu            string          `json:"cpu,omitempty"`
-	LinkSets       ServiceLinkSets `json:"link-sets,omitempty"`
-	Links          ServiceLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	AppName	string		`json:"appName,omitempty"`
+	ImageName	string		`json:"imageName,omitempty"`
+	Cpu	string		`json:"cpu,omitempty"`
+	Scale	int64		`json:"scale,omitempty"`
+	ServiceName	string		`json:"serviceName,omitempty"`
+	Memory	string		`json:"memory,omitempty"`
+	Command	string		`json:"command,omitempty"`
+	Environment	[]string		`json:"environment,omitempty"`
+	EndpointGroups	[]string		`json:"endpointGroups,omitempty"`
+	Networks	[]string		`json:"networks,omitempty"`
+	VolumeProfile	string		`json:"volumeProfile,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	LinkSets	ServiceLinkSets		`json:"link-sets,omitempty"`
+	Links	ServiceLinks		`json:"links,omitempty"`
 }
 
 type ServiceLinkSets struct {
-	Instances      map[string]modeldb.Link `json:"instances,omitempty"`
-	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
-	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
+	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
+	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
+	Instances	map[string]modeldb.Link		`json:"instances,omitempty"`
 }
 
 type ServiceLinks struct {
-	App           modeldb.Link `json:"app,omitempty"`
-	VolumeProfile modeldb.Link `json:"volumeProfile,omitempty"`
+	App	modeldb.Link		`json:"app,omitempty"`
+	VolumeProfile	modeldb.Link		`json:"volumeProfile,omitempty"`
 }
 
 type ServiceInstance struct {
-	Key         string                  `json:"key,omitempty"`
-	InstanceID  string                  `json:"instanceId,omitempty"`
-	TenantName  string                  `json:"tenantName,omitempty"`
-	AppName     string                  `json:"appName,omitempty"`
-	ServiceName string                  `json:"serviceName,omitempty"`
-	Volumes     []string                `json:"volumes,omitempty"`
-	LinkSets    ServiceInstanceLinkSets `json:"link-sets,omitempty"`
-	Links       ServiceInstanceLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	InstanceID	string		`json:"instanceId,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	AppName	string		`json:"appName,omitempty"`
+	ServiceName	string		`json:"serviceName,omitempty"`
+	Volumes	[]string		`json:"volumes,omitempty"`
+	LinkSets	ServiceInstanceLinkSets		`json:"link-sets,omitempty"`
+	Links	ServiceInstanceLinks		`json:"links,omitempty"`
 }
 
 type ServiceInstanceLinkSets struct {
-	Volumes map[string]modeldb.Link `json:"volumes,omitempty"`
+	Volumes	map[string]modeldb.Link		`json:"volumes,omitempty"`
 }
 
 type ServiceInstanceLinks struct {
-	Service modeldb.Link `json:"service,omitempty"`
+	Service	modeldb.Link		`json:"service,omitempty"`
 }
 
 type Tenant struct {
-	Key        string         `json:"key,omitempty"`
-	TenantName string         `json:"tenantName,omitempty"`
-	LinkSets   TenantLinkSets `json:"link-sets,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	LinkSets	TenantLinkSets		`json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Volumes        map[string]modeldb.Link `json:"volumes,omitempty"`
-	VolumeProfiles map[string]modeldb.Link `json:"volumeProfiles,omitempty"`
-	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
-	Apps           map[string]modeldb.Link `json:"apps,omitempty"`
-	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
-	Policies       map[string]modeldb.Link `json:"policies,omitempty"`
+	Apps	map[string]modeldb.Link		`json:"apps,omitempty"`
+	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
+	Policies	map[string]modeldb.Link		`json:"policies,omitempty"`
+	Volumes	map[string]modeldb.Link		`json:"volumes,omitempty"`
+	VolumeProfiles	map[string]modeldb.Link		`json:"volumeProfiles,omitempty"`
+	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
 }
 
 type Volume struct {
-	Key           string         `json:"key,omitempty"`
-	VolumeName    string         `json:"volumeName,omitempty"`
-	TenantName    string         `json:"tenantName,omitempty"`
-	DatastoreType string         `json:"datastoreType,omitempty"`
-	PoolName      string         `json:"poolName,omitempty"`
-	Size          string         `json:"size,omitempty"`
-	MountPoint    string         `json:"mountPoint,omitempty"`
-	LinkSets      VolumeLinkSets `json:"link-sets,omitempty"`
-	Links         VolumeLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	DatastoreType	string		`json:"datastoreType,omitempty"`
+	PoolName	string		`json:"poolName,omitempty"`
+	Size	string		`json:"size,omitempty"`
+	MountPoint	string		`json:"mountPoint,omitempty"`
+	VolumeName	string		`json:"volumeName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	LinkSets	VolumeLinkSets		`json:"link-sets,omitempty"`
+	Links	VolumeLinks		`json:"links,omitempty"`
 }
 
 type VolumeLinkSets struct {
-	ServiceInstances map[string]modeldb.Link `json:"serviceInstances,omitempty"`
+	ServiceInstances	map[string]modeldb.Link		`json:"serviceInstances,omitempty"`
 }
 
 type VolumeLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
 type VolumeProfile struct {
-	Key               string                `json:"key,omitempty"`
-	Size              string                `json:"size,omitempty"`
-	MountPoint        string                `json:"mountPoint,omitempty"`
-	VolumeProfileName string                `json:"volumeProfileName,omitempty"`
-	TenantName        string                `json:"tenantName,omitempty"`
-	DatastoreType     string                `json:"datastoreType,omitempty"`
-	PoolName          string                `json:"poolName,omitempty"`
-	LinkSets          VolumeProfileLinkSets `json:"link-sets,omitempty"`
-	Links             VolumeProfileLinks    `json:"links,omitempty"`
+	Key		string		`json:"key,omitempty"`
+	PoolName	string		`json:"poolName,omitempty"`
+	Size	string		`json:"size,omitempty"`
+	MountPoint	string		`json:"mountPoint,omitempty"`
+	VolumeProfileName	string		`json:"volumeProfileName,omitempty"`
+	TenantName	string		`json:"tenantName,omitempty"`
+	DatastoreType	string		`json:"datastoreType,omitempty"`
+	LinkSets	VolumeProfileLinkSets		`json:"link-sets,omitempty"`
+	Links	VolumeProfileLinks		`json:"links,omitempty"`
 }
 
 type VolumeProfileLinkSets struct {
-	Services map[string]modeldb.Link `json:"services,omitempty"`
+	Services	map[string]modeldb.Link		`json:"services,omitempty"`
 }
 
 type VolumeProfileLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant	modeldb.Link		`json:"tenant,omitempty"`
 }
 
+
+
 type Collections struct {
-	apps             map[string]*App
-	endpointGroups   map[string]*EndpointGroup
-	networks         map[string]*Network
-	policys          map[string]*Policy
-	services         map[string]*Service
-	serviceInstances map[string]*ServiceInstance
-	tenants          map[string]*Tenant
-	volumes          map[string]*Volume
-	volumeProfiles   map[string]*VolumeProfile
+	apps    map[string]*App
+	endpointGroups    map[string]*EndpointGroup
+	networks    map[string]*Network
+	policys    map[string]*Policy
+	services    map[string]*Service
+	serviceInstances    map[string]*ServiceInstance
+	tenants    map[string]*Tenant
+	volumes    map[string]*Volume
+	volumeProfiles    map[string]*VolumeProfile
 }
 
 var collections Collections
 
 type Callbacks interface {
 	AppCreate(app *App) error
+	AppUpdate(app, params *App) error
 	AppDelete(app *App) error
 	EndpointGroupCreate(endpointGroup *EndpointGroup) error
+	EndpointGroupUpdate(endpointGroup, params *EndpointGroup) error
 	EndpointGroupDelete(endpointGroup *EndpointGroup) error
 	NetworkCreate(network *Network) error
+	NetworkUpdate(network, params *Network) error
 	NetworkDelete(network *Network) error
 	PolicyCreate(policy *Policy) error
+	PolicyUpdate(policy, params *Policy) error
 	PolicyDelete(policy *Policy) error
 	ServiceCreate(service *Service) error
+	ServiceUpdate(service, params *Service) error
 	ServiceDelete(service *Service) error
 	ServiceInstanceCreate(serviceInstance *ServiceInstance) error
+	ServiceInstanceUpdate(serviceInstance, params *ServiceInstance) error
 	ServiceInstanceDelete(serviceInstance *ServiceInstance) error
 	TenantCreate(tenant *Tenant) error
+	TenantUpdate(tenant, params *Tenant) error
 	TenantDelete(tenant *Tenant) error
 	VolumeCreate(volume *Volume) error
+	VolumeUpdate(volume, params *Volume) error
 	VolumeDelete(volume *Volume) error
 	VolumeProfileCreate(volumeProfile *VolumeProfile) error
+	VolumeProfileUpdate(volumeProfile, params *VolumeProfile) error
 	VolumeProfileDelete(volumeProfile *VolumeProfile) error
 }
 
 var objCallbackHandler Callbacks
 
+
 func Init(handler Callbacks) {
-	objCallbackHandler = handler
+objCallbackHandler = handler
 
 	collections.apps = make(map[string]*App)
 	collections.endpointGroups = make(map[string]*EndpointGroup)
@@ -252,6 +263,7 @@ func Init(handler Callbacks) {
 	restoreVolume()
 	restoreVolumeProfile()
 }
+
 
 // Simple Wrapper for http handlers
 func makeHttpHandler(handlerFunc HttpApiFunc) http.HandlerFunc {
@@ -460,18 +472,28 @@ func httpDeleteApp(w http.ResponseWriter, r *http.Request, vars map[string]strin
 
 // Create a app object
 func CreateApp(obj *App) error {
-	// save it in cache
-	collections.apps[obj.Key] = obj
+	// Check if object already exists
+	if collections.apps[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.AppUpdate(collections.apps[obj.Key], obj)
+		if err != nil {
+			log.Errorf("AppUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.apps[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.AppCreate(obj)
-	if err != nil {
-		log.Errorf("AppCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.AppCreate(obj)
+		if err != nil {
+			log.Errorf("AppCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving app %s to db. Err: %v", obj.Key, err)
 		return err
@@ -654,18 +676,28 @@ func httpDeleteEndpointGroup(w http.ResponseWriter, r *http.Request, vars map[st
 
 // Create a endpointGroup object
 func CreateEndpointGroup(obj *EndpointGroup) error {
-	// save it in cache
-	collections.endpointGroups[obj.Key] = obj
+	// Check if object already exists
+	if collections.endpointGroups[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.EndpointGroupUpdate(collections.endpointGroups[obj.Key], obj)
+		if err != nil {
+			log.Errorf("EndpointGroupUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.endpointGroups[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.EndpointGroupCreate(obj)
-	if err != nil {
-		log.Errorf("EndpointGroupCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.EndpointGroupCreate(obj)
+		if err != nil {
+			log.Errorf("EndpointGroupCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving endpointGroup %s to db. Err: %v", obj.Key, err)
 		return err
@@ -848,18 +880,28 @@ func httpDeleteNetwork(w http.ResponseWriter, r *http.Request, vars map[string]s
 
 // Create a network object
 func CreateNetwork(obj *Network) error {
-	// save it in cache
-	collections.networks[obj.Key] = obj
+	// Check if object already exists
+	if collections.networks[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.NetworkUpdate(collections.networks[obj.Key], obj)
+		if err != nil {
+			log.Errorf("NetworkUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.networks[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.NetworkCreate(obj)
-	if err != nil {
-		log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.NetworkCreate(obj)
+		if err != nil {
+			log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving network %s to db. Err: %v", obj.Key, err)
 		return err
@@ -1042,18 +1084,28 @@ func httpDeletePolicy(w http.ResponseWriter, r *http.Request, vars map[string]st
 
 // Create a policy object
 func CreatePolicy(obj *Policy) error {
-	// save it in cache
-	collections.policys[obj.Key] = obj
+	// Check if object already exists
+	if collections.policys[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.PolicyUpdate(collections.policys[obj.Key], obj)
+		if err != nil {
+			log.Errorf("PolicyUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.policys[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.PolicyCreate(obj)
-	if err != nil {
-		log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.PolicyCreate(obj)
+		if err != nil {
+			log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving policy %s to db. Err: %v", obj.Key, err)
 		return err
@@ -1236,18 +1288,28 @@ func httpDeleteService(w http.ResponseWriter, r *http.Request, vars map[string]s
 
 // Create a service object
 func CreateService(obj *Service) error {
-	// save it in cache
-	collections.services[obj.Key] = obj
+	// Check if object already exists
+	if collections.services[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.ServiceUpdate(collections.services[obj.Key], obj)
+		if err != nil {
+			log.Errorf("ServiceUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.services[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.ServiceCreate(obj)
-	if err != nil {
-		log.Errorf("ServiceCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.ServiceCreate(obj)
+		if err != nil {
+			log.Errorf("ServiceCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving service %s to db. Err: %v", obj.Key, err)
 		return err
@@ -1430,18 +1492,28 @@ func httpDeleteServiceInstance(w http.ResponseWriter, r *http.Request, vars map[
 
 // Create a serviceInstance object
 func CreateServiceInstance(obj *ServiceInstance) error {
-	// save it in cache
-	collections.serviceInstances[obj.Key] = obj
+	// Check if object already exists
+	if collections.serviceInstances[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.ServiceInstanceUpdate(collections.serviceInstances[obj.Key], obj)
+		if err != nil {
+			log.Errorf("ServiceInstanceUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.serviceInstances[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.ServiceInstanceCreate(obj)
-	if err != nil {
-		log.Errorf("ServiceInstanceCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.ServiceInstanceCreate(obj)
+		if err != nil {
+			log.Errorf("ServiceInstanceCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving serviceInstance %s to db. Err: %v", obj.Key, err)
 		return err
@@ -1624,18 +1696,28 @@ func httpDeleteTenant(w http.ResponseWriter, r *http.Request, vars map[string]st
 
 // Create a tenant object
 func CreateTenant(obj *Tenant) error {
-	// save it in cache
-	collections.tenants[obj.Key] = obj
+	// Check if object already exists
+	if collections.tenants[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.TenantUpdate(collections.tenants[obj.Key], obj)
+		if err != nil {
+			log.Errorf("TenantUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.tenants[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.TenantCreate(obj)
-	if err != nil {
-		log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.TenantCreate(obj)
+		if err != nil {
+			log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving tenant %s to db. Err: %v", obj.Key, err)
 		return err
@@ -1818,18 +1900,28 @@ func httpDeleteVolume(w http.ResponseWriter, r *http.Request, vars map[string]st
 
 // Create a volume object
 func CreateVolume(obj *Volume) error {
-	// save it in cache
-	collections.volumes[obj.Key] = obj
+	// Check if object already exists
+	if collections.volumes[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.VolumeUpdate(collections.volumes[obj.Key], obj)
+		if err != nil {
+			log.Errorf("VolumeUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.volumes[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.VolumeCreate(obj)
-	if err != nil {
-		log.Errorf("VolumeCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.VolumeCreate(obj)
+		if err != nil {
+			log.Errorf("VolumeCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving volume %s to db. Err: %v", obj.Key, err)
 		return err
@@ -2012,18 +2104,28 @@ func httpDeleteVolumeProfile(w http.ResponseWriter, r *http.Request, vars map[st
 
 // Create a volumeProfile object
 func CreateVolumeProfile(obj *VolumeProfile) error {
-	// save it in cache
-	collections.volumeProfiles[obj.Key] = obj
+	// Check if object already exists
+	if collections.volumeProfiles[obj.Key] != nil {
+		// Perform Update callback
+		err := objCallbackHandler.VolumeProfileUpdate(collections.volumeProfiles[obj.Key], obj)
+		if err != nil {
+			log.Errorf("VolumeProfileUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.volumeProfiles[obj.Key] = obj
 
-	// Perform callback
-	err := objCallbackHandler.VolumeProfileCreate(obj)
-	if err != nil {
-		log.Errorf("VolumeProfileCreate retruned error for: %+v. Err: %v", obj, err)
-		return err
+		// Perform Create callback
+		err := objCallbackHandler.VolumeProfileCreate(obj)
+		if err != nil {
+			log.Errorf("VolumeProfileCreate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
 	}
 
 	// Write it to modeldb
-	err = obj.Write()
+	err := obj.Write()
 	if err != nil {
 		log.Errorf("Error saving volumeProfile %s to db. Err: %v", obj.Key, err)
 		return err
@@ -2129,3 +2231,4 @@ func restoreVolumeProfile() error {
 
 	return nil
 }
+

@@ -86,6 +86,11 @@ func (self *ApiController) AppCreate(app *contivModel.App) error {
 
 	return nil
 }
+func (self *ApiController) AppUpdate(app, params *contivModel.App) error {
+	log.Infof("Received AppUpdate: %+v, params: %+v", app, params)
+
+    return nil
+}
 
 func (self *ApiController) AppDelete(app *contivModel.App) error {
 	log.Infof("Received AppDelete: %+v", app)
@@ -95,6 +100,11 @@ func (self *ApiController) AppDelete(app *contivModel.App) error {
 func (self *ApiController) EndpointGroupCreate(endpointGroup *contivModel.EndpointGroup) error {
 	log.Infof("Received EndpointGroupCreate: %+v", endpointGroup)
 	return nil
+}
+
+func (self *ApiController) EndpointGroupUpdate(endpointGroup, params *contivModel.EndpointGroup) error {
+	log.Infof("Received EndpointGroupUpdate: %+v, params: %+v", endpointGroup, params)
+    return nil
 }
 
 func (self *ApiController) EndpointGroupDelete(endpointGroup *contivModel.EndpointGroup) error {
@@ -128,6 +138,12 @@ func (self *ApiController) NetworkCreate(network *contivModel.Network) error {
 
 	return nil
 }
+
+func (self *ApiController) NetworkUpdate(network, params *contivModel.Network) error {
+	log.Infof("Received NetworkUpdate: %+v, params: %+v", network, params)
+    return nil
+}
+
 func (self *ApiController) NetworkDelete(network *contivModel.Network) error {
 	log.Infof("Received NetworkDelete: %+v", network)
 	return nil
@@ -135,6 +151,10 @@ func (self *ApiController) NetworkDelete(network *contivModel.Network) error {
 func (self *ApiController) PolicyCreate(policy *contivModel.Policy) error {
 	log.Infof("Received PolicyCreate: %+v", policy)
 	return nil
+}
+func (self *ApiController) PolicyUpdate(policy, params *contivModel.Policy) error {
+	log.Infof("Received PolicyUpdate: %+v, params: %+v", policy, params)
+    return nil
 }
 func (self *ApiController) PolicyDelete(policy *contivModel.Policy) error {
 	log.Infof("Received PolicyDelete: %+v", policy)
@@ -302,6 +322,11 @@ func (self *ApiController) ServiceCreate(service *contivModel.Service) error {
 	return nil
 }
 
+func (self *ApiController) ServiceUpdate(service, params *contivModel.Service) error {
+	log.Infof("Received ServiceUpdate: %+v, params: %+v", service, params)
+    return nil
+}
+
 func (self *ApiController) ServiceDelete(service *contivModel.Service) error {
 	log.Infof("Received ServiceDelete: %+v", service)
 	return nil
@@ -339,6 +364,12 @@ func (self *ApiController) ServiceInstanceCreate(serviceInstance *contivModel.Se
 
 	return nil
 }
+
+func (self *ApiController) ServiceInstanceUpdate(serviceInstance, params *contivModel.ServiceInstance) error {
+	log.Infof("Received ServiceInstanceUpdate: %+v, params: %+v", serviceInstance, params)
+    return nil
+}
+
 func (self *ApiController) ServiceInstanceDelete(serviceInstance *contivModel.ServiceInstance) error {
 	log.Infof("Received ServiceInstanceDelete: %+v", serviceInstance)
 	return nil
@@ -397,10 +428,17 @@ func (self *ApiController) TenantCreate(tenant *contivModel.Tenant) error {
 
 	return nil
 }
+
+func (self *ApiController) TenantUpdate(tenant, params *contivModel.Tenant) error {
+	log.Infof("Received TenantUpdate: %+v, params: %+v", tenant, params)
+    return nil
+}
+
 func (self *ApiController) TenantDelete(tenant *contivModel.Tenant) error {
 	log.Infof("Received TenantDelete: %+v", tenant)
 	return nil
 }
+
 func (self *ApiController) VolumeCreate(volume *contivModel.Volume) error {
 	log.Infof("Received VolumeCreate: %+v", volume)
 
@@ -426,6 +464,12 @@ func (self *ApiController) VolumeCreate(volume *contivModel.Volume) error {
 
 	return nil
 }
+
+func (self *ApiController) VolumeUpdate(volume, params *contivModel.Volume) error {
+	log.Infof("Received VolumeUpdate: %+v, params: %+v", volume, params)
+    return nil
+}
+
 func (self *ApiController) VolumeDelete(volume *contivModel.Volume) error {
 	log.Infof("Received VolumeDelete: %+v", volume)
 	return nil
@@ -454,6 +498,11 @@ func (self *ApiController) VolumeProfileCreate(volumeProfile *contivModel.Volume
 	}
 
 	return nil
+}
+
+func (self *ApiController) VolumeProfileUpdate(volumeProfile, params *contivModel.VolumeProfile) error {
+	log.Infof("Received VolumeProfileUpdate: %+v, params: %+v", volumeProfile, params)
+    return nil
 }
 
 func (self *ApiController) VolumeProfileDelete(volumeProfile *contivModel.VolumeProfile) error {

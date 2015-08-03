@@ -57,11 +57,13 @@ func TestLockAcquireRelease(t *testing.T) {
 	lock1, err := client.NewLock("master", "hostname1", 10)
 	lock2, err := client.NewLock("master", "hostname2", 10)
 
-	// Acquire the lock
+	// Acquire the master lock
 	err = lock1.Acquire(0)
 	if err != nil {
 		t.Errorf("Error acquiring lock1")
 	}
+
+	time.Sleep(300 * time.Millisecond)
 
 	// Try to acquire the same lock again. This should fail
 	err = lock2.Acquire(0)
