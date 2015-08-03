@@ -7,10 +7,11 @@ package contivModel
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb/modeldb"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
