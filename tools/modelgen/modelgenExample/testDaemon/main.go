@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	contivModel "github.com/contiv/objmodel/tools/modelgen/test"
+	contivModel "github.com/contiv/objmodel/tools/modelgen/modelgenExample"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"runtime"
 
 	"github.com/contiv/objmodel/objdb"
 
@@ -19,6 +20,8 @@ var client = NewClient()
 
 // Perform Set/Get operation on default conf store
 func TestSetGet(t *testing.T) {
+	runtime.GOMAXPROCS(4)
+
 	// Set
 	setVal := JsonObj{
 		Value: "test1",
@@ -40,6 +43,13 @@ func TestSetGet(t *testing.T) {
 		fmt.Printf("Got invalid response: %+v\n", retVal)
 		t.Errorf("Got invalid response")
 	}
+
+	err = client.DelObj("/contiv.io/test")
+	if err != nil {
+		t.Errorf("Error deleting test object. Err: %v", err)
+	}
+
+	fmt.Printf("Set/Get/Del test successful\n")
 }
 
 func TestLockAcquireRelease(t *testing.T) {
@@ -52,6 +62,8 @@ func TestLockAcquireRelease(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error acquiring lock1")
 	}
+
+	// Try to acquire the same lock again. This should fail
 	err = lock2.Acquire(0)
 	if err != nil {
 		t.Errorf("Error acquiring lock2")
@@ -72,21 +84,24 @@ func TestLockAcquireRelease(t *testing.T) {
 			}
 		case <-time.After(time.Second * time.Duration(30)):
 			if cnt == 1 {
-				fmt.Printf("10sec timer. releasing Lock1\n\n")
+				fmt.Printf("30sec timer. releasing Lock1\n\n")
 				// At this point, lock1 should be holding the lock
 				if !lock1.IsAcquired() {
 					t.Errorf("Lock1 failed to acquire lock\n\n")
 				}
+
+				// Release lock1 so that lock2 can acquire it
 				lock1.Release()
 				cnt++
 			} else {
-				fmt.Printf("20sec timer. releasing Lock2\n\n")
+				fmt.Printf("60sec timer. checking if lock2 is acquired\n\n")
 
-				// At this point, lock1 should be holding the lock
+				// At this point, lock2 should be holding the lock
 				if !lock2.IsAcquired() {
 					t.Errorf("Lock2 failed to acquire lock\n\n")
 				}
 
+				fmt.Printf("Success. Lock2 Successfully acquired. releasing it\n")
 				// we are done with the test
 				lock2.Release()
 
@@ -97,7 +112,7 @@ func TestLockAcquireRelease(t *testing.T) {
 }
 
 func TestLockAcquireTimeout(t *testing.T) {
-	fmt.Printf("\n\n\n\n\n\n =========================================================== \n\n\n\n\n")
+	fmt.Printf("\n\n\n =========================================================== \n\n\n")
 	// Create a lock
 	lock1, err := client.NewLock("master", "hostname1", 10)
 	lock2, err := client.NewLock("master", "hostname2", 10)
@@ -107,6 +122,9 @@ func TestLockAcquireTimeout(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error acquiring lock1")
 	}
+
+	time.Sleep(300 * time.Millisecond)
+
 	err = lock2.Acquire(20)
 	if err != nil {
 		t.Errorf("Error acquiring lock2")
@@ -170,7 +188,19 @@ func TestServiceRegister(t *testing.T) {
 		t.Errorf("Resp service list did not match input")
 	}
 
+	// Wait a while to make sure background refresh is working correctly
 	time.Sleep(time.Second * 90)
+
+	resp, err = client.GetService("athena")
+	if err != nil {
+		t.Errorf("Error getting service. Err: %+v\n", err)
+	}
+
+	log.Infof("Got service list: %+v\n", resp)
+
+	if (len(resp) < 2) || (resp[0] != service1Info) || (resp[1] != service2Info) {
+		t.Errorf("Resp service list did not match input")
+	}
 }
 
 func TestServiceDeregister(t *testing.T) {
