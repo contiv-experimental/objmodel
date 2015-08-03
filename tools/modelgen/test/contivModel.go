@@ -5,46 +5,45 @@
 package contivModel
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
-	"encoding/json"
-	"github.com/contiv/symphony/pkg/confStore/modeldb"
-	"github.com/gorilla/mux"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/contiv/objmodel/objdb/modeldb"
+	"github.com/gorilla/mux"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
 
 type Network struct {
-	Key		string		`json:"key,omitempty"`
-	Name	string		`json:"name,omitempty"`
-	IsPublic	bool		`json:"isPublic,omitempty"`
-	IsPrivate	bool		`json:"isPrivate,omitempty"`
-	Encap	string		`json:"encap,omitempty"`
-	Subnet	string		`json:"subnet,omitempty"`
-	Labels	[]string		`json:"labels,omitempty"`
-	Links	NetworkLinks		`json:"links,omitempty"`
+	Key       string       `json:"key,omitempty"`
+	Name      string       `json:"name,omitempty"`
+	IsPublic  bool         `json:"isPublic,omitempty"`
+	IsPrivate bool         `json:"isPrivate,omitempty"`
+	Encap     string       `json:"encap,omitempty"`
+	Subnet    string       `json:"subnet,omitempty"`
+	Labels    []string     `json:"labels,omitempty"`
+	Links     NetworkLinks `json:"links,omitempty"`
 }
 
 type NetworkLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
 type Tenant struct {
-	Key		string		`json:"key,omitempty"`
-	Name	string		`json:"name,omitempty"`
-	LinkSets	TenantLinkSets		`json:"link-sets,omitempty"`
+	Key      string         `json:"key,omitempty"`
+	Name     string         `json:"name,omitempty"`
+	LinkSets TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
+	Networks map[string]modeldb.Link `json:"networks,omitempty"`
 }
 
-
-
 type Collections struct {
-	networks    map[string]*Network
-	tenants    map[string]*Tenant
+	networks map[string]*Network
+	tenants  map[string]*Tenant
 }
 
 var collections Collections
@@ -58,9 +57,8 @@ type Callbacks interface {
 
 var objCallbackHandler Callbacks
 
-
 func Init(handler Callbacks) {
-objCallbackHandler = handler
+	objCallbackHandler = handler
 
 	collections.networks = make(map[string]*Network)
 	collections.tenants = make(map[string]*Tenant)
@@ -68,7 +66,6 @@ objCallbackHandler = handler
 	restoreNetwork()
 	restoreTenant()
 }
-
 
 // Simple Wrapper for http handlers
 func makeHttpHandler(handlerFunc HttpApiFunc) http.HandlerFunc {
@@ -518,4 +515,3 @@ func restoreTenant() error {
 
 	return nil
 }
-

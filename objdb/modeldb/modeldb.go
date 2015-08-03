@@ -17,7 +17,7 @@ package modeldb
 
 // Wrapper for persistently storing object model
 
-import(
+import (
 	"github.com/contiv/objmodel/objdb/objdbClient"
 
 	log "github.com/Sirupsen/logrus"
@@ -32,8 +32,8 @@ type ModelObj interface {
 
 // Link is a one way relattion between two objects
 type Link struct {
-	ObjType		string		`json:"type,omitempty"`
-	ObjKey		string		`json:"key,omitempty"`
+	ObjType string `json:"type,omitempty"`
+	ObjKey  string `json:"key,omitempty"`
 }
 
 // AddLink adds a one way link to target object
@@ -52,7 +52,7 @@ func AddLinkSet(linkSet *(map[string]Link), obj ModelObj) error {
 	// add the link to map
 	(*linkSet)[obj.GetKey()] = Link{
 		ObjType: obj.GetType(),
-		ObjKey: obj.GetKey(),
+		ObjKey:  obj.GetKey(),
 	}
 
 	return nil

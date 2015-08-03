@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
 	"github.com/contiv/objmodel/objdb"
 
 	log "github.com/Sirupsen/logrus"
