@@ -94,44 +94,44 @@ func TestParseJsonSchema(t *testing.T) {
 }
 
 type TenantNetworksLinkSet struct {
-	Type	string
-	Key		string
-	network	*Network
+	Type    string
+	Key     string
+	network *Network
 }
 
 type TenantEndPointLinkSet struct {
-	Type 	string
-	Key		string
+	Type string
+	Key  string
 	// endpoint 	*Endpoint
 }
 type TenantLinkSets struct {
-	Networks	[]TenantNetworksLinkSet
-	Endpoints	[]TenantEndPointLinkSet
+	Networks  []TenantNetworksLinkSet
+	Endpoints []TenantEndPointLinkSet
 }
 
 type Tenant struct {
-	Key		string
-	Name	string
-	LinkSets	TenantLinkSets
+	Key      string
+	Name     string
+	LinkSets TenantLinkSets
 }
 
 type NetworkTenantLink struct {
-	Type	string
-	Key		string
-	tenant	*Tenant
+	Type   string
+	Key    string
+	tenant *Tenant
 }
 
 type NetworkLinks struct {
-	Tenants 	[]NetworkTenantLink
+	Tenants []NetworkTenantLink
 }
 
 type Network struct {
-	Key		string
-	Name 	string
+	Key          string
+	Name         string
 	Reachability string
-	Encap		string
-	Subnet		string
-	Links		NetworkLinks
+	Encap        string
+	Subnet       string
+	Links        NetworkLinks
 }
 
 // Sample json objects

@@ -16,8 +16,8 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -74,22 +74,22 @@ func ParseSchema(input []byte) (*Schema, error) {
 func isValidProperty(prop *Property) bool {
 	// Check the property type
 	switch prop.Type {
-		case "string":
-			break
-		case "number":
-			break
-		case "int":
-			break
-		case "bool":
-			break
-		case "array":
-			if prop.Items == "" {
-				log.Errorf("Array property %s needs items field", prop.Name)
-				return false
-			}
-		default:
-			log.Errorf("Unknown proprty type %s for %s", prop.Type, prop.Name)
+	case "string":
+		break
+	case "number":
+		break
+	case "int":
+		break
+	case "bool":
+		break
+	case "array":
+		if prop.Items == "" {
+			log.Errorf("Array property %s needs items field", prop.Name)
 			return false
+		}
+	default:
+		log.Errorf("Unknown proprty type %s for %s", prop.Type, prop.Name)
+		return false
 	}
 
 	return true

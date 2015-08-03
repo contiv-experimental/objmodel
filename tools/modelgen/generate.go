@@ -16,18 +16,17 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-	"errors"
-	"strings"
-	"regexp"
 	"bytes"
+	"errors"
+	"fmt"
+	"regexp"
+	"strings"
+	"text/template"
 	"unicode"
 	"unicode/utf8"
-	"text/template"
 
 	log "github.com/Sirupsen/logrus"
 )
-
 
 // GenerateGoStructs generates go code from a schema
 func (s *Schema) GenerateGoStructs() (string, error) {
@@ -59,7 +58,6 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	goStr = goStr + fmt.Sprintf("}\n\n")
 
 	goStr = goStr + fmt.Sprintf("var objCallbackHandler Callbacks\n\n")
-
 
 	// Generate an Init function
 	goStr = goStr + fmt.Sprintf("\nfunc Init(handler Callbacks) {\n")
@@ -429,51 +427,51 @@ func (obj *Object) GenerateGoStructs() (string, error) {
 	}
 
 	// add link-sets
-	if (len(obj.LinkSets) > 0) {
+	if len(obj.LinkSets) > 0 {
 		goStr = goStr + fmt.Sprintf("	LinkSets	%sLinkSets		`json:\"link-sets,omitempty\"`\n", objName)
 	}
 
 	// add links
-	if (len(obj.Links) > 0) {
+	if len(obj.Links) > 0 {
 		goStr = goStr + fmt.Sprintf("	Links	%sLinks		`json:\"links,omitempty\"`\n", objName)
 	}
 
 	goStr = goStr + fmt.Sprintf("}\n\n")
 
 	// define object's linkset
-	if (len(obj.LinkSets) > 0) {
+	if len(obj.LinkSets) > 0 {
 		goStr = goStr + fmt.Sprintf("type %sLinkSets struct {\n", objName)
-		for lsName, _ := range obj.LinkSets {
+		for lsName := range obj.LinkSets {
 			goStr = goStr + fmt.Sprintf("	%s	map[string]modeldb.Link		`json:\"%s,omitempty\"`\n", initialCap(lsName), lsName)
 		}
 		goStr = goStr + fmt.Sprintf("}\n\n")
 	}
-/*
-	// Define each link-sets
-	for _, linkSet := range obj.LinkSets {
-		subStr, err := linkSet.GenerateGoStructs()
-		if err == nil {
-			goStr = goStr + subStr
+	/*
+		// Define each link-sets
+		for _, linkSet := range obj.LinkSets {
+			subStr, err := linkSet.GenerateGoStructs()
+			if err == nil {
+				goStr = goStr + subStr
+			}
 		}
-	}
-*/
+	*/
 	// Define object's links
-	if (len(obj.Links) > 0) {
+	if len(obj.Links) > 0 {
 		goStr = goStr + fmt.Sprintf("type %sLinks struct {\n", objName)
-		for lName, _ := range obj.Links {
+		for lName := range obj.Links {
 			goStr = goStr + fmt.Sprintf("	%s	modeldb.Link		`json:\"%s,omitempty\"`\n", initialCap(lName), lName)
 		}
 		goStr = goStr + fmt.Sprintf("}\n\n")
 	}
-/*
-	// define each link
-	for _, link := range obj.Links {
-		subStr, err := link.GenerateGoStructs()
-		if err == nil {
-			goStr = goStr + subStr
+	/*
+		// define each link
+		for _, link := range obj.Links {
+			subStr, err := link.GenerateGoStructs()
+			if err == nil {
+				goStr = goStr + subStr
+			}
 		}
-	}
-*/
+	*/
 
 	return goStr, nil
 }
@@ -505,16 +503,16 @@ func (link *Link) GenerateGoStructs() (string, error) {
 func xlatePropType(propType string) string {
 	var goStr string
 	switch propType {
-		case "string":
-			goStr = goStr + fmt.Sprintf("string")
-		case "number":
-			goStr = goStr + fmt.Sprintf("float64")
-		case "int":
-			goStr = goStr + fmt.Sprintf("int64")
-		case "bool":
-			goStr = goStr + fmt.Sprintf("bool")
-		default:
-			return ""
+	case "string":
+		goStr = goStr + fmt.Sprintf("string")
+	case "number":
+		goStr = goStr + fmt.Sprintf("float64")
+	case "int":
+		goStr = goStr + fmt.Sprintf("int64")
+	case "bool":
+		goStr = goStr + fmt.Sprintf("bool")
+	default:
+		return ""
 	}
 
 	return goStr
@@ -525,29 +523,28 @@ func (prop *Property) GenerateGoStructs() (string, error) {
 
 	goStr = fmt.Sprintf("	%s	", initialCap(prop.Name))
 	switch prop.Type {
-		case "string":
-			fallthrough
-		case "number":
-			fallthrough
-		case "int":
-			fallthrough
-		case "bool":
-			subStr := xlatePropType(prop.Type)
-			goStr = goStr + fmt.Sprintf("%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
-		case "array":
-			subStr := xlatePropType(prop.Items)
-			if subStr == "" {
-				return "", errors.New("Unknown array items")
-			}
+	case "string":
+		fallthrough
+	case "number":
+		fallthrough
+	case "int":
+		fallthrough
+	case "bool":
+		subStr := xlatePropType(prop.Type)
+		goStr = goStr + fmt.Sprintf("%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
+	case "array":
+		subStr := xlatePropType(prop.Items)
+		if subStr == "" {
+			return "", errors.New("Unknown array items")
+		}
 
-			goStr = goStr + fmt.Sprintf("[]%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
-		default:
-			return "", errors.New("Unknown Property")
+		goStr = goStr + fmt.Sprintf("[]%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
+	default:
+		return "", errors.New("Unknown Property")
 	}
 
 	return goStr, nil
 }
-
 
 /*********************** Helper funcs *************************/
 var (

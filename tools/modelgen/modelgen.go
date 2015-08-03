@@ -90,7 +90,7 @@ func main() {
 	}
 
 	// Write the Go file output
-	goFileName := path.Join(outPath, schema.Name + ".go")
+	goFileName := path.Join(outPath, schema.Name+".go")
 	file, err := os.Create(goFileName)
 	if err != nil {
 		log.Fatal(err)
@@ -107,7 +107,7 @@ func main() {
 	}
 
 	// Write javascript file
-	jsFileName := path.Join(outPath, schema.Name + ".js")
+	jsFileName := path.Join(outPath, schema.Name+".js")
 	file, err = os.Create(jsFileName)
 	if err != nil {
 		log.Fatal(err)
