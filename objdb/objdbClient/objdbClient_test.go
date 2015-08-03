@@ -2,9 +2,9 @@ package objdbClient
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
-	"runtime"
 
 	"github.com/contiv/objmodel/objdb"
 
