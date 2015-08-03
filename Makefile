@@ -1,4 +1,5 @@
 
+.PHONY: all build checks
 TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/objdbClient/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
 
 all: test binaries
@@ -6,7 +7,10 @@ all: test binaries
 get:
 	go get -v ./...
 
-build: get
+checks:
+	./checks "$(TO_BUILD)"
+
+build: get checks
 	go install -v ./...
 
 etcd:

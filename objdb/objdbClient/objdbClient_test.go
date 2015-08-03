@@ -163,8 +163,16 @@ func TestLockAcquireTimeout(t *testing.T) {
 
 func TestServiceRegister(t *testing.T) {
 	// Service info
-	service1Info := objdb.ServiceInfo{"athena", "10.10.10.10", 4567}
-	service2Info := objdb.ServiceInfo{"athena", "10.10.10.10", 4568}
+	service1Info := objdb.ServiceInfo{
+		ServiceName: "athena",
+		HostAddr:    "10.10.10.10",
+		Port:        4567,
+	}
+	service2Info := objdb.ServiceInfo{
+		ServiceName: "athena",
+		HostAddr:    "10.10.10.10",
+		Port:        4568,
+	}
 
 	// register it
 	err := client.RegisterService(service1Info)
@@ -207,8 +215,16 @@ func TestServiceRegister(t *testing.T) {
 
 func TestServiceDeregister(t *testing.T) {
 	// Service info
-	service1Info := objdb.ServiceInfo{"athena", "10.10.10.10", 4567}
-	service2Info := objdb.ServiceInfo{"athena", "10.10.10.10", 4568}
+	service1Info := objdb.ServiceInfo{
+		ServiceName: "athena",
+		HostAddr:    "10.10.10.10",
+		Port:        4567,
+	}
+	service2Info := objdb.ServiceInfo{
+		ServiceName: "athena",
+		HostAddr:    "10.10.10.10",
+		Port:        4568,
+	}
 
 	// register it
 	err := client.DeregisterService(service1Info)
@@ -224,7 +240,11 @@ func TestServiceDeregister(t *testing.T) {
 }
 
 func TestServiceWatch(t *testing.T) {
-	service1Info := objdb.ServiceInfo{"athena", "10.10.10.10", 4567}
+	service1Info := objdb.ServiceInfo{
+		ServiceName: "athena",
+		HostAddr:    "10.10.10.10",
+		Port:        4567,
+	}
 
 	// register it
 	err := client.RegisterService(service1Info)
@@ -249,7 +269,11 @@ func TestServiceWatch(t *testing.T) {
 		case srvEvent := <-eventChan:
 			log.Infof("\n----\nReceived event: %+v\n----", srvEvent)
 		case <-time.After(time.Second * time.Duration(10)):
-			service2Info := objdb.ServiceInfo{"athena", "10.10.10.11", 4567}
+			service2Info := objdb.ServiceInfo{
+				ServiceName: "athena",
+				HostAddr:    "10.10.10.11",
+				Port:        4567,
+			}
 			if cnt == 1 {
 				// register it
 				err := client.RegisterService(service2Info)

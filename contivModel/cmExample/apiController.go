@@ -89,7 +89,7 @@ func (self *ApiController) AppCreate(app *contivModel.App) error {
 func (self *ApiController) AppUpdate(app, params *contivModel.App) error {
 	log.Infof("Received AppUpdate: %+v, params: %+v", app, params)
 
-    return nil
+	return nil
 }
 
 func (self *ApiController) AppDelete(app *contivModel.App) error {
@@ -104,7 +104,7 @@ func (self *ApiController) EndpointGroupCreate(endpointGroup *contivModel.Endpoi
 
 func (self *ApiController) EndpointGroupUpdate(endpointGroup, params *contivModel.EndpointGroup) error {
 	log.Infof("Received EndpointGroupUpdate: %+v, params: %+v", endpointGroup, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) EndpointGroupDelete(endpointGroup *contivModel.EndpointGroup) error {
@@ -141,7 +141,7 @@ func (self *ApiController) NetworkCreate(network *contivModel.Network) error {
 
 func (self *ApiController) NetworkUpdate(network, params *contivModel.Network) error {
 	log.Infof("Received NetworkUpdate: %+v, params: %+v", network, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) NetworkDelete(network *contivModel.Network) error {
@@ -154,7 +154,7 @@ func (self *ApiController) PolicyCreate(policy *contivModel.Policy) error {
 }
 func (self *ApiController) PolicyUpdate(policy, params *contivModel.Policy) error {
 	log.Infof("Received PolicyUpdate: %+v, params: %+v", policy, params)
-    return nil
+	return nil
 }
 func (self *ApiController) PolicyDelete(policy *contivModel.Policy) error {
 	log.Infof("Received PolicyDelete: %+v", policy)
@@ -324,7 +324,7 @@ func (self *ApiController) ServiceCreate(service *contivModel.Service) error {
 
 func (self *ApiController) ServiceUpdate(service, params *contivModel.Service) error {
 	log.Infof("Received ServiceUpdate: %+v, params: %+v", service, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) ServiceDelete(service *contivModel.Service) error {
@@ -367,7 +367,7 @@ func (self *ApiController) ServiceInstanceCreate(serviceInstance *contivModel.Se
 
 func (self *ApiController) ServiceInstanceUpdate(serviceInstance, params *contivModel.ServiceInstance) error {
 	log.Infof("Received ServiceInstanceUpdate: %+v, params: %+v", serviceInstance, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) ServiceInstanceDelete(serviceInstance *contivModel.ServiceInstance) error {
@@ -431,7 +431,7 @@ func (self *ApiController) TenantCreate(tenant *contivModel.Tenant) error {
 
 func (self *ApiController) TenantUpdate(tenant, params *contivModel.Tenant) error {
 	log.Infof("Received TenantUpdate: %+v, params: %+v", tenant, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) TenantDelete(tenant *contivModel.Tenant) error {
@@ -467,7 +467,7 @@ func (self *ApiController) VolumeCreate(volume *contivModel.Volume) error {
 
 func (self *ApiController) VolumeUpdate(volume, params *contivModel.Volume) error {
 	log.Infof("Received VolumeUpdate: %+v, params: %+v", volume, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) VolumeDelete(volume *contivModel.Volume) error {
@@ -502,7 +502,7 @@ func (self *ApiController) VolumeProfileCreate(volumeProfile *contivModel.Volume
 
 func (self *ApiController) VolumeProfileUpdate(volumeProfile, params *contivModel.VolumeProfile) error {
 	log.Infof("Received VolumeProfileUpdate: %+v, params: %+v", volumeProfile, params)
-    return nil
+	return nil
 }
 
 func (self *ApiController) VolumeProfileDelete(volumeProfile *contivModel.VolumeProfile) error {
