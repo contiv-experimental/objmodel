@@ -5,204 +5,202 @@
 package contivModel
 
 import (
-	"errors"
-	"net/http"
 	"encoding/json"
+	"errors"
+	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb/modeldb"
 	"github.com/gorilla/mux"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
 
 type App struct {
-	Key		string		`json:"key,omitempty"`
-	AppName	string		`json:"appName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	LinkSets	AppLinkSets		`json:"link-sets,omitempty"`
-	Links	AppLinks		`json:"links,omitempty"`
+	Key        string      `json:"key,omitempty"`
+	AppName    string      `json:"appName,omitempty"`
+	TenantName string      `json:"tenantName,omitempty"`
+	LinkSets   AppLinkSets `json:"link-sets,omitempty"`
+	Links      AppLinks    `json:"links,omitempty"`
 }
 
 type AppLinkSets struct {
-	Services	map[string]modeldb.Link		`json:"services,omitempty"`
+	Services map[string]modeldb.Link `json:"services,omitempty"`
 }
 
 type AppLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
 type EndpointGroup struct {
-	Key		string		`json:"key,omitempty"`
-	GroupName	string		`json:"groupName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	NetworkName	string		`json:"networkName,omitempty"`
-	Policies	[]string		`json:"policies,omitempty"`
-	LinkSets	EndpointGroupLinkSets		`json:"link-sets,omitempty"`
-	Links	EndpointGroupLinks		`json:"links,omitempty"`
+	Key         string                `json:"key,omitempty"`
+	GroupName   string                `json:"groupName,omitempty"`
+	TenantName  string                `json:"tenantName,omitempty"`
+	NetworkName string                `json:"networkName,omitempty"`
+	Policies    []string              `json:"policies,omitempty"`
+	LinkSets    EndpointGroupLinkSets `json:"link-sets,omitempty"`
+	Links       EndpointGroupLinks    `json:"links,omitempty"`
 }
 
 type EndpointGroupLinkSets struct {
-	Services	map[string]modeldb.Link		`json:"services,omitempty"`
-	Policies	map[string]modeldb.Link		`json:"policies,omitempty"`
+	Services map[string]modeldb.Link `json:"services,omitempty"`
+	Policies map[string]modeldb.Link `json:"policies,omitempty"`
 }
 
 type EndpointGroupLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
-	Network	modeldb.Link		`json:"network,omitempty"`
+	Tenant  modeldb.Link `json:"tenant,omitempty"`
+	Network modeldb.Link `json:"network,omitempty"`
 }
 
 type Network struct {
-	Key		string		`json:"key,omitempty"`
-	Subnet	string		`json:"subnet,omitempty"`
-	NetworkName	string		`json:"networkName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	IsPublic	bool		`json:"isPublic,omitempty"`
-	IsPrivate	bool		`json:"isPrivate,omitempty"`
-	Encap	string		`json:"encap,omitempty"`
-	LinkSets	NetworkLinkSets		`json:"link-sets,omitempty"`
-	Links	NetworkLinks		`json:"links,omitempty"`
+	Key         string          `json:"key,omitempty"`
+	Subnet      string          `json:"subnet,omitempty"`
+	NetworkName string          `json:"networkName,omitempty"`
+	TenantName  string          `json:"tenantName,omitempty"`
+	IsPublic    bool            `json:"isPublic,omitempty"`
+	IsPrivate   bool            `json:"isPrivate,omitempty"`
+	Encap       string          `json:"encap,omitempty"`
+	LinkSets    NetworkLinkSets `json:"link-sets,omitempty"`
+	Links       NetworkLinks    `json:"links,omitempty"`
 }
 
 type NetworkLinkSets struct {
-	Services	map[string]modeldb.Link		`json:"services,omitempty"`
+	Services map[string]modeldb.Link `json:"services,omitempty"`
 }
 
 type NetworkLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
 type Policy struct {
-	Key		string		`json:"key,omitempty"`
-	PolicyName	string		`json:"policyName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	Rules	[]string		`json:"rules,omitempty"`
-	LinkSets	PolicyLinkSets		`json:"link-sets,omitempty"`
-	Links	PolicyLinks		`json:"links,omitempty"`
+	Key        string         `json:"key,omitempty"`
+	PolicyName string         `json:"policyName,omitempty"`
+	TenantName string         `json:"tenantName,omitempty"`
+	Rules      []string       `json:"rules,omitempty"`
+	LinkSets   PolicyLinkSets `json:"link-sets,omitempty"`
+	Links      PolicyLinks    `json:"links,omitempty"`
 }
 
 type PolicyLinkSets struct {
-	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
+	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
 }
 
 type PolicyLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
 type Service struct {
-	Key		string		`json:"key,omitempty"`
-	EndpointGroups	[]string		`json:"endpointGroups,omitempty"`
-	Networks	[]string		`json:"networks,omitempty"`
-	VolumeProfile	string		`json:"volumeProfile,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	Memory	string		`json:"memory,omitempty"`
-	Command	string		`json:"command,omitempty"`
-	Environment	[]string		`json:"environment,omitempty"`
-	Scale	int64		`json:"scale,omitempty"`
-	ServiceName	string		`json:"serviceName,omitempty"`
-	AppName	string		`json:"appName,omitempty"`
-	ImageName	string		`json:"imageName,omitempty"`
-	Cpu	string		`json:"cpu,omitempty"`
-	LinkSets	ServiceLinkSets		`json:"link-sets,omitempty"`
-	Links	ServiceLinks		`json:"links,omitempty"`
+	Key            string          `json:"key,omitempty"`
+	EndpointGroups []string        `json:"endpointGroups,omitempty"`
+	Networks       []string        `json:"networks,omitempty"`
+	VolumeProfile  string          `json:"volumeProfile,omitempty"`
+	TenantName     string          `json:"tenantName,omitempty"`
+	Memory         string          `json:"memory,omitempty"`
+	Command        string          `json:"command,omitempty"`
+	Environment    []string        `json:"environment,omitempty"`
+	Scale          int64           `json:"scale,omitempty"`
+	ServiceName    string          `json:"serviceName,omitempty"`
+	AppName        string          `json:"appName,omitempty"`
+	ImageName      string          `json:"imageName,omitempty"`
+	Cpu            string          `json:"cpu,omitempty"`
+	LinkSets       ServiceLinkSets `json:"link-sets,omitempty"`
+	Links          ServiceLinks    `json:"links,omitempty"`
 }
 
 type ServiceLinkSets struct {
-	Instances	map[string]modeldb.Link		`json:"instances,omitempty"`
-	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
-	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
+	Instances      map[string]modeldb.Link `json:"instances,omitempty"`
+	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
+	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
 }
 
 type ServiceLinks struct {
-	App	modeldb.Link		`json:"app,omitempty"`
-	VolumeProfile	modeldb.Link		`json:"volumeProfile,omitempty"`
+	App           modeldb.Link `json:"app,omitempty"`
+	VolumeProfile modeldb.Link `json:"volumeProfile,omitempty"`
 }
 
 type ServiceInstance struct {
-	Key		string		`json:"key,omitempty"`
-	InstanceID	string		`json:"instanceId,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	AppName	string		`json:"appName,omitempty"`
-	ServiceName	string		`json:"serviceName,omitempty"`
-	Volumes	[]string		`json:"volumes,omitempty"`
-	LinkSets	ServiceInstanceLinkSets		`json:"link-sets,omitempty"`
-	Links	ServiceInstanceLinks		`json:"links,omitempty"`
+	Key         string                  `json:"key,omitempty"`
+	InstanceID  string                  `json:"instanceId,omitempty"`
+	TenantName  string                  `json:"tenantName,omitempty"`
+	AppName     string                  `json:"appName,omitempty"`
+	ServiceName string                  `json:"serviceName,omitempty"`
+	Volumes     []string                `json:"volumes,omitempty"`
+	LinkSets    ServiceInstanceLinkSets `json:"link-sets,omitempty"`
+	Links       ServiceInstanceLinks    `json:"links,omitempty"`
 }
 
 type ServiceInstanceLinkSets struct {
-	Volumes	map[string]modeldb.Link		`json:"volumes,omitempty"`
+	Volumes map[string]modeldb.Link `json:"volumes,omitempty"`
 }
 
 type ServiceInstanceLinks struct {
-	Service	modeldb.Link		`json:"service,omitempty"`
+	Service modeldb.Link `json:"service,omitempty"`
 }
 
 type Tenant struct {
-	Key		string		`json:"key,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	LinkSets	TenantLinkSets		`json:"link-sets,omitempty"`
+	Key        string         `json:"key,omitempty"`
+	TenantName string         `json:"tenantName,omitempty"`
+	LinkSets   TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Volumes	map[string]modeldb.Link		`json:"volumes,omitempty"`
-	VolumeProfiles	map[string]modeldb.Link		`json:"volumeProfiles,omitempty"`
-	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
-	Apps	map[string]modeldb.Link		`json:"apps,omitempty"`
-	EndpointGroups	map[string]modeldb.Link		`json:"endpointGroups,omitempty"`
-	Policies	map[string]modeldb.Link		`json:"policies,omitempty"`
+	Volumes        map[string]modeldb.Link `json:"volumes,omitempty"`
+	VolumeProfiles map[string]modeldb.Link `json:"volumeProfiles,omitempty"`
+	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
+	Apps           map[string]modeldb.Link `json:"apps,omitempty"`
+	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
+	Policies       map[string]modeldb.Link `json:"policies,omitempty"`
 }
 
 type Volume struct {
-	Key		string		`json:"key,omitempty"`
-	VolumeName	string		`json:"volumeName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	DatastoreType	string		`json:"datastoreType,omitempty"`
-	PoolName	string		`json:"poolName,omitempty"`
-	Size	string		`json:"size,omitempty"`
-	MountPoint	string		`json:"mountPoint,omitempty"`
-	LinkSets	VolumeLinkSets		`json:"link-sets,omitempty"`
-	Links	VolumeLinks		`json:"links,omitempty"`
+	Key           string         `json:"key,omitempty"`
+	VolumeName    string         `json:"volumeName,omitempty"`
+	TenantName    string         `json:"tenantName,omitempty"`
+	DatastoreType string         `json:"datastoreType,omitempty"`
+	PoolName      string         `json:"poolName,omitempty"`
+	Size          string         `json:"size,omitempty"`
+	MountPoint    string         `json:"mountPoint,omitempty"`
+	LinkSets      VolumeLinkSets `json:"link-sets,omitempty"`
+	Links         VolumeLinks    `json:"links,omitempty"`
 }
 
 type VolumeLinkSets struct {
-	ServiceInstances	map[string]modeldb.Link		`json:"serviceInstances,omitempty"`
+	ServiceInstances map[string]modeldb.Link `json:"serviceInstances,omitempty"`
 }
 
 type VolumeLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
 type VolumeProfile struct {
-	Key		string		`json:"key,omitempty"`
-	Size	string		`json:"size,omitempty"`
-	MountPoint	string		`json:"mountPoint,omitempty"`
-	VolumeProfileName	string		`json:"volumeProfileName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	DatastoreType	string		`json:"datastoreType,omitempty"`
-	PoolName	string		`json:"poolName,omitempty"`
-	LinkSets	VolumeProfileLinkSets		`json:"link-sets,omitempty"`
-	Links	VolumeProfileLinks		`json:"links,omitempty"`
+	Key               string                `json:"key,omitempty"`
+	Size              string                `json:"size,omitempty"`
+	MountPoint        string                `json:"mountPoint,omitempty"`
+	VolumeProfileName string                `json:"volumeProfileName,omitempty"`
+	TenantName        string                `json:"tenantName,omitempty"`
+	DatastoreType     string                `json:"datastoreType,omitempty"`
+	PoolName          string                `json:"poolName,omitempty"`
+	LinkSets          VolumeProfileLinkSets `json:"link-sets,omitempty"`
+	Links             VolumeProfileLinks    `json:"links,omitempty"`
 }
 
 type VolumeProfileLinkSets struct {
-	Services	map[string]modeldb.Link		`json:"services,omitempty"`
+	Services map[string]modeldb.Link `json:"services,omitempty"`
 }
 
 type VolumeProfileLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
-
-
 type Collections struct {
-	apps    map[string]*App
-	endpointGroups    map[string]*EndpointGroup
-	networks    map[string]*Network
-	policys    map[string]*Policy
-	services    map[string]*Service
-	serviceInstances    map[string]*ServiceInstance
-	tenants    map[string]*Tenant
-	volumes    map[string]*Volume
-	volumeProfiles    map[string]*VolumeProfile
+	apps             map[string]*App
+	endpointGroups   map[string]*EndpointGroup
+	networks         map[string]*Network
+	policys          map[string]*Policy
+	services         map[string]*Service
+	serviceInstances map[string]*ServiceInstance
+	tenants          map[string]*Tenant
+	volumes          map[string]*Volume
+	volumeProfiles   map[string]*VolumeProfile
 }
 
 var collections Collections
@@ -230,9 +228,8 @@ type Callbacks interface {
 
 var objCallbackHandler Callbacks
 
-
 func Init(handler Callbacks) {
-objCallbackHandler = handler
+	objCallbackHandler = handler
 
 	collections.apps = make(map[string]*App)
 	collections.endpointGroups = make(map[string]*EndpointGroup)
@@ -254,7 +251,6 @@ objCallbackHandler = handler
 	restoreVolume()
 	restoreVolumeProfile()
 }
-
 
 // Simple Wrapper for http handlers
 func makeHttpHandler(handlerFunc HttpApiFunc) http.HandlerFunc {
@@ -2132,4 +2128,3 @@ func restoreVolumeProfile() error {
 
 	return nil
 }
-

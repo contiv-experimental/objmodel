@@ -1,9 +1,9 @@
 package objdbClient
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb"
 	"github.com/contiv/objmodel/objdb/plugins"
-	log "github.com/Sirupsen/logrus"
 )
 
 // Create a new conf store

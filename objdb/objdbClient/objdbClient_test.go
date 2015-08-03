@@ -2,9 +2,9 @@ package objdbClient
 
 import (
 	"fmt"
+	"github.com/contiv/objmodel/objdb"
 	"testing"
 	"time"
-	"github.com/contiv/objmodel/objdb"
 
 	log "github.com/Sirupsen/logrus"
 )

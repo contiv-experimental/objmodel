@@ -17,34 +17,34 @@ package main
 
 // Schema represents a JSON Schema.
 type Schema struct {
-	Name		string 		`json:"name,omitempty"`
-	Objects		[]Object  	`json:"objects,omitempty"`
+	Name    string   `json:"name,omitempty"`
+	Objects []Object `json:"objects,omitempty"`
 }
 
 // Object represents a schema object
 type Object struct {
-	Name	string						`json:"name,omitempty"`
-	Type	string						`json:"type,omitempty"`
-	Properties	map[string]*Property 	`json:"properties,omitempty"`
-	LinkSets	map[string]*LinkSet 	`json:"link-sets,omitempty"`
-	Links		map[string]*Link 		`json:"links,omitempty"`
+	Name       string               `json:"name,omitempty"`
+	Type       string               `json:"type,omitempty"`
+	Properties map[string]*Property `json:"properties,omitempty"`
+	LinkSets   map[string]*LinkSet  `json:"link-sets,omitempty"`
+	Links      map[string]*Link     `json:"links,omitempty"`
 }
 
 // Property represents a property of an object
 type Property struct {
-	Name		string		`json:"-"`
-	Type		string		`json:"type,omitempty"`
-	Title		string		`json:"title,omitempty"`
-	Description	string		`json:"description,omitempty"`
-	Items		string		`json:"items,omitempty"`
+	Name        string `json:"-"`
+	Type        string `json:"type,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Items       string `json:"items,omitempty"`
 }
 
 type LinkSet struct {
-	Name		string		`json:"-"`
-	Ref			string		`json:"ref,omitempty"`
+	Name string `json:"-"`
+	Ref  string `json:"ref,omitempty"`
 }
 
 type Link struct {
-	Name		string		`json:"-"`
-	Ref			string		`json:"ref,omitempty"`
+	Name string `json:"-"`
+	Ref  string `json:"ref,omitempty"`
 }
