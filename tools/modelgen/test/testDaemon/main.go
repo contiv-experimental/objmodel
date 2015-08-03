@@ -3,14 +3,14 @@ package main
 import (
 	"net/http"
 
-	contivModel "github.com/contiv/symphony/tools/modelgen/test"
+	contivModel "github.com/contiv/objmodel/tools/modelgen/test"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 )
 
 type ObjHandler struct {
-	dummy	string
+	dummy string
 }
 
 func (self *ObjHandler) TenantCreate(tenant *contivModel.Tenant) error {
@@ -34,7 +34,6 @@ func (self *ObjHandler) NetworkDelete(network *contivModel.Network) error {
 }
 
 var handler ObjHandler
-
 
 func main() {
 	// Initialize the models
