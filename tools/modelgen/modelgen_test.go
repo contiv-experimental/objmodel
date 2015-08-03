@@ -78,7 +78,7 @@ func TestParseJsonSchema(t *testing.T) {
 
 	}`
 
-	schema, err := ParseSchema(inputStr)
+	schema, err := ParseSchema([]byte(inputStr))
 	if err != nil {
 		t.Fatalf("Error parsing json schema. Err: %v", err)
 	}
