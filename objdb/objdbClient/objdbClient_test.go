@@ -30,27 +30,26 @@ func TestSetGet(t *testing.T) {
 	setVal := JsonObj{
 		Value: "test1",
 	}
-	err := client.SetObj("/contiv.io/test", setVal)
-	if err != nil {
-		fmt.Printf("Error setting key. Err: %v\n", err)
-		t.Errorf("Error setting key")
+
+	if err := client.SetObj("/contiv.io/test", setVal); err != nil {
+		fmt.Printf("Fatal setting key. Err: %v\n", err)
+		t.Fatalf("Fatal setting key")
 	}
 
 	var retVal JsonObj
-	err = client.GetObj("/contiv.io/test", &retVal)
-	if err != nil {
-		fmt.Printf("Error getting key. Err: %v\n", err)
-		t.Errorf("Error getting key")
+
+	if err := client.GetObj("/contiv.io/test", &retVal); err != nil {
+		fmt.Printf("Fatal getting key. Err: %v\n", err)
+		t.Fatalf("Fatal getting key")
 	}
 
 	if retVal.Value != "test1" {
 		fmt.Printf("Got invalid response: %+v\n", retVal)
-		t.Errorf("Got invalid response")
+		t.Fatalf("Got invalid response")
 	}
 
-	err = client.DelObj("/contiv.io/test")
-	if err != nil {
-		t.Errorf("Error deleting test object. Err: %v", err)
+	if err := client.DelObj("/contiv.io/test"); err != nil {
+		t.Fatalf("Fatal deleting test object. Err: %v", err)
 	}
 
 	fmt.Printf("Set/Get/Del test successful\n")
@@ -59,20 +58,25 @@ func TestSetGet(t *testing.T) {
 func TestLockAcquireRelease(t *testing.T) {
 	// Create a lock
 	lock1, err := client.NewLock("master", "hostname1", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	lock2, err := client.NewLock("master", "hostname2", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Acquire the master lock
-	err = lock1.Acquire(0)
-	if err != nil {
-		t.Errorf("Error acquiring lock1")
+	if err := lock1.Acquire(0); err != nil {
+		t.Fatalf("Fatal acquiring lock1")
 	}
 
 	time.Sleep(300 * time.Millisecond)
 
 	// Try to acquire the same lock again. This should fail
-	err = lock2.Acquire(0)
-	if err != nil {
-		t.Errorf("Error acquiring lock2")
+	if err := lock2.Acquire(0); err != nil {
+		t.Fatalf("Fatal acquiring lock2")
 	}
 
 	cnt := 1
@@ -93,7 +97,7 @@ func TestLockAcquireRelease(t *testing.T) {
 				fmt.Printf("1 sec timer. releasing Lock1\n\n")
 				// At this point, lock1 should be holding the lock
 				if !lock1.IsAcquired() {
-					t.Errorf("Lock1 failed to acquire lock\n\n")
+					t.Fatalf("Lock1 failed to acquire lock\n\n")
 				}
 
 				// Release lock1 so that lock2 can acquire it
@@ -104,7 +108,7 @@ func TestLockAcquireRelease(t *testing.T) {
 
 				// At this point, lock2 should be holding the lock
 				if !lock2.IsAcquired() {
-					t.Errorf("Lock2 failed to acquire lock\n\n")
+					t.Fatalf("Lock2 failed to acquire lock\n\n")
 				}
 
 				fmt.Printf("Success. Lock2 Successfully acquired. releasing it\n")
@@ -121,19 +125,25 @@ func TestLockAcquireTimeout(t *testing.T) {
 	fmt.Printf("\n\n\n =========================================================== \n\n\n")
 	// Create a lock
 	lock1, err := client.NewLock("master", "hostname1", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	lock2, err := client.NewLock("master", "hostname2", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Acquire the lock
-	err = lock1.Acquire(0)
-	if err != nil {
-		t.Errorf("Error acquiring lock1")
+
+	if err := lock1.Acquire(0); err != nil {
+		t.Fatalf("Fatal acquiring lock1")
 	}
 
 	time.Sleep(300 * time.Millisecond)
 
-	err = lock2.Acquire(2)
-	if err != nil {
-		t.Errorf("Error acquiring lock2")
+	if err := lock2.Acquire(2); err != nil {
+		t.Fatalf("Fatal acquiring lock2")
 	}
 
 	for {
@@ -154,7 +164,7 @@ func TestLockAcquireTimeout(t *testing.T) {
 			fmt.Printf("1sec timer. releasing Lock1\n\n")
 			// At this point, lock1 should be holding the lock
 			if !lock1.IsAcquired() {
-				t.Errorf("Lock1 failed to acquire lock\n\n")
+				t.Fatalf("Lock1 failed to acquire lock\n\n")
 			}
 			lock1.Release()
 
@@ -179,27 +189,25 @@ func TestServiceRegister(t *testing.T) {
 	}
 
 	// register it
-	err := client.RegisterService(service1Info)
-	if err != nil {
-		t.Errorf("Error registering service. Err: %+v\n", err)
+	if err := client.RegisterService(service1Info); err != nil {
+		t.Fatalf("Fatal registering service. Err: %+v\n", err)
 	}
 	log.Infof("Registered service: %+v", service1Info)
 
-	err = client.RegisterService(service2Info)
-	if err != nil {
-		t.Errorf("Error registering service. Err: %+v\n", err)
+	if err := client.RegisterService(service2Info); err != nil {
+		t.Fatalf("Fatal registering service. Err: %+v\n", err)
 	}
 	log.Infof("Registered service: %+v", service2Info)
 
 	resp, err := client.GetService("athena")
 	if err != nil {
-		t.Errorf("Error getting service. Err: %+v\n", err)
+		t.Fatalf("Fatal getting service. Err: %+v\n", err)
 	}
 
 	log.Infof("Got service list: %+v\n", resp)
 
 	if (len(resp) < 2) || (resp[0] != service1Info) || (resp[1] != service2Info) {
-		t.Errorf("Resp service list did not match input")
+		t.Fatalf("Resp service list did not match input")
 	}
 
 	// Wait a while to make sure background refresh is working correctly
@@ -207,13 +215,13 @@ func TestServiceRegister(t *testing.T) {
 
 	resp, err = client.GetService("athena")
 	if err != nil {
-		t.Errorf("Error getting service. Err: %+v\n", err)
+		t.Fatalf("Fatal getting service. Err: %+v\n", err)
 	}
 
 	log.Infof("Got service list: %+v\n", resp)
 
 	if (len(resp) < 2) || (resp[0] != service1Info) || (resp[1] != service2Info) {
-		t.Errorf("Resp service list did not match input")
+		t.Fatalf("Resp service list did not match input")
 	}
 }
 
@@ -231,13 +239,12 @@ func TestServiceDeregister(t *testing.T) {
 	}
 
 	// register it
-	err := client.DeregisterService(service1Info)
-	if err != nil {
-		t.Errorf("Error deregistering service. Err: %+v\n", err)
+	if err := client.DeregisterService(service1Info); err != nil {
+		t.Fatalf("Fatal deregistering service. Err: %+v\n", err)
 	}
-	err = client.DeregisterService(service2Info)
-	if err != nil {
-		t.Errorf("Error deregistering service. Err: %+v\n", err)
+
+	if err := client.DeregisterService(service2Info); err != nil {
+		t.Fatalf("Fatal deregistering service. Err: %+v\n", err)
 	}
 
 	time.Sleep(time.Second * 1)
@@ -251,9 +258,9 @@ func TestServiceWatch(t *testing.T) {
 	}
 
 	// register it
-	err := client.RegisterService(service1Info)
-	if err != nil {
-		t.Errorf("Error registering service. Err: %+v\n", err)
+
+	if err := client.RegisterService(service1Info); err != nil {
+		t.Fatalf("Fatal registering service. Err: %+v\n", err)
 	}
 	log.Infof("Registered service: %+v", service1Info)
 
@@ -262,9 +269,9 @@ func TestServiceWatch(t *testing.T) {
 	stopChan := make(chan bool, 1)
 
 	// Start watching for service
-	err = client.WatchService("athena", eventChan, stopChan)
-	if err != nil {
-		t.Errorf("Error watching service. Err %v", err)
+
+	if err := client.WatchService("athena", eventChan, stopChan); err != nil {
+		t.Fatalf("Fatal watching service. Err %v", err)
 	}
 
 	cnt := 1
@@ -280,18 +287,16 @@ func TestServiceWatch(t *testing.T) {
 			}
 			if cnt == 1 {
 				// register it
-				err := client.RegisterService(service2Info)
-				if err != nil {
-					t.Errorf("Error registering service. Err: %+v\n", err)
+				if err := client.RegisterService(service2Info); err != nil {
+					t.Fatalf("Fatal registering service. Err: %+v\n", err)
 				}
 				log.Infof("Registered service: %+v", service2Info)
 			} else if cnt == 5 {
 				// deregister it
-				err := client.DeregisterService(service2Info)
-				if err != nil {
-					t.Errorf("Error deregistering service. Err: %+v\n", err)
+				if err := client.DeregisterService(service2Info); err != nil {
+					t.Fatalf("Fatal deregistering service. Err: %+v\n", err)
 				}
-				log.Infof("Dregistered service: %+v", service2Info)
+				log.Infof("Deregistered service: %+v", service2Info)
 			} else if cnt == 7 {
 				// Stop the watch
 				stopChan <- true
