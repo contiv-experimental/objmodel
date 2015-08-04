@@ -84,9 +84,9 @@ func TestLockAcquireRelease(t *testing.T) {
 			if event.EventType == objdb.LockAcquired {
 				fmt.Printf("Master lock acquired by Lock2\n")
 			}
-		case <-time.After(time.Second * time.Duration(30)):
+		case <-time.After(1 * time.Second):
 			if cnt == 1 {
-				fmt.Printf("30sec timer. releasing Lock1\n\n")
+				fmt.Printf("1 sec timer. releasing Lock1\n\n")
 				// At this point, lock1 should be holding the lock
 				if !lock1.IsAcquired() {
 					t.Errorf("Lock1 failed to acquire lock\n\n")
@@ -96,7 +96,7 @@ func TestLockAcquireRelease(t *testing.T) {
 				lock1.Release()
 				cnt++
 			} else {
-				fmt.Printf("60sec timer. checking if lock2 is acquired\n\n")
+				fmt.Printf("2sec timer. checking if lock2 is acquired\n\n")
 
 				// At this point, lock2 should be holding the lock
 				if !lock2.IsAcquired() {
@@ -127,7 +127,7 @@ func TestLockAcquireTimeout(t *testing.T) {
 
 	time.Sleep(300 * time.Millisecond)
 
-	err = lock2.Acquire(20)
+	err = lock2.Acquire(2)
 	if err != nil {
 		t.Errorf("Error acquiring lock2")
 	}
@@ -146,8 +146,8 @@ func TestLockAcquireTimeout(t *testing.T) {
 			} else {
 				fmt.Printf("Lock2 timeout as expected")
 			}
-		case <-time.After(time.Second * time.Duration(40)):
-			fmt.Printf("40sec timer. releasing Lock1\n\n")
+		case <-time.After(1 * time.Second):
+			fmt.Printf("1sec timer. releasing Lock1\n\n")
 			// At this point, lock1 should be holding the lock
 			if !lock1.IsAcquired() {
 				t.Errorf("Lock1 failed to acquire lock\n\n")
@@ -199,7 +199,7 @@ func TestServiceRegister(t *testing.T) {
 	}
 
 	// Wait a while to make sure background refresh is working correctly
-	time.Sleep(time.Second * 90)
+	time.Sleep(5 * time.Second)
 
 	resp, err = client.GetService("athena")
 	if err != nil {
@@ -236,7 +236,7 @@ func TestServiceDeregister(t *testing.T) {
 		t.Errorf("Error deregistering service. Err: %+v\n", err)
 	}
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 1)
 }
 
 func TestServiceWatch(t *testing.T) {
