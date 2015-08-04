@@ -2,6 +2,7 @@ package objdbClient
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -18,10 +19,13 @@ type JsonObj struct {
 // New objdb client
 var client = NewClient()
 
+func TestMain(m *testing.M) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	os.Exit(m.Run())
+}
+
 // Perform Set/Get operation on default conf store
 func TestSetGet(t *testing.T) {
-	runtime.GOMAXPROCS(4)
-
 	// Set
 	setVal := JsonObj{
 		Value: "test1",
