@@ -1,6 +1,8 @@
 package objdb
 
 import (
+	"sync"
+
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -103,11 +105,16 @@ type ObjdbApi interface {
 	DeregisterService(serviceInfo ServiceInfo) error
 }
 
-// List of plugins available
-var pluginList map[string]ObjdbApi = make(map[string]ObjdbApi)
+var (
+	// List of plugins available
+	pluginList  = make(map[string]ObjdbApi)
+	pluginMutex = new(sync.Mutex)
+)
 
 // Register a plugin
 func RegisterPlugin(name string, plugin ObjdbApi) error {
+	pluginMutex.Lock()
+	defer pluginMutex.Unlock()
 	pluginList[name] = plugin
 
 	return nil
@@ -116,6 +123,8 @@ func RegisterPlugin(name string, plugin ObjdbApi) error {
 // Return the plugin by name
 func GetPlugin(name string) ObjdbApi {
 	// Find the conf store
+	pluginMutex.Lock()
+	defer pluginMutex.Unlock()
 	if pluginList[name] == nil {
 		log.Errorf("Confstore Plugin %s not registered", name)
 		log.Fatal("Confstore plugin not registered")
