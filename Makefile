@@ -2,16 +2,20 @@
 .PHONY: all build checks
 TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/objdbClient/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
 
-all: test binaries
+all: test build
 
-get:
-	go get -v ./...
+godep:
+	@if [ -z "`which godep`" ]; then go get -v github.com/kr/godep; fi
 
-checks:
+vet:
+	@(go tool | grep vet) || go get -v golang.org/x/tools/cmd/vet
+
+checks: vet
 	./checks "$(TO_BUILD)"
 
-build: get checks
-	go install -v ./...
+build: godep checks
+	godep go install -v ./...
+	make clean
 
 etcd:
 	pkill etcd || exit 0
@@ -24,9 +28,13 @@ build-docker:
 test: build-docker
 	docker run --rm -v ${PWD}:/gopath/src/github.com/contiv/objmodel objmodel
 
+clean:
+	rm -rf Godeps/_workspace/pkg
+
 host-test: etcd build
-	PATH=${PWD}/bin:${PATH} go test -v ./...
-	rm -rf pkg
+	godep go test -v ./...
+	make clean
 
 reflex:
+	# go get github.com/cespare/reflex
 	reflex -r '.*\.go' make test
