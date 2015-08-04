@@ -72,7 +72,7 @@ func TestLockAcquireRelease(t *testing.T) {
 		t.Fatalf("Fatal acquiring lock1")
 	}
 
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	// Try to acquire the same lock again. This should fail
 	if err := lock2.Acquire(0); err != nil {
@@ -92,9 +92,9 @@ func TestLockAcquireRelease(t *testing.T) {
 			if event.EventType == objdb.LockAcquired {
 				fmt.Printf("Master lock acquired by Lock2\n")
 			}
-		case <-time.After(1 * time.Second):
+		case <-time.After(100 * time.Millisecond):
 			if cnt == 1 {
-				fmt.Printf("1 sec timer. releasing Lock1\n\n")
+				fmt.Printf("100 ms timer. releasing Lock1\n\n")
 				// At this point, lock1 should be holding the lock
 				if !lock1.IsAcquired() {
 					t.Fatalf("Lock1 failed to acquire lock\n\n")
@@ -104,7 +104,7 @@ func TestLockAcquireRelease(t *testing.T) {
 				lock1.Release()
 				cnt++
 			} else {
-				fmt.Printf("2sec timer. checking if lock2 is acquired\n\n")
+				fmt.Printf("200 ms timer. checking if lock2 is acquired\n\n")
 
 				// At this point, lock2 should be holding the lock
 				if !lock2.IsAcquired() {
@@ -140,7 +140,7 @@ func TestLockAcquireTimeout(t *testing.T) {
 		t.Fatalf("Fatal acquiring lock1")
 	}
 
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	if err := lock2.Acquire(2); err != nil {
 		t.Fatalf("Fatal acquiring lock2")
@@ -160,7 +160,7 @@ func TestLockAcquireTimeout(t *testing.T) {
 			} else {
 				fmt.Printf("Lock2 timeout as expected")
 			}
-		case <-time.After(1 * time.Second):
+		case <-time.After(1 * time.Millisecond):
 			fmt.Printf("1sec timer. releasing Lock1\n\n")
 			// At this point, lock1 should be holding the lock
 			if !lock1.IsAcquired() {
@@ -209,7 +209,7 @@ func TestServiceRegister(t *testing.T) {
 	}
 
 	// Wait a while to make sure background refresh is working correctly
-	time.Sleep(5 * time.Second)
+	time.Sleep(5 * time.Millisecond)
 
 	resp, err = client.GetService("athena")
 	if err != nil {
@@ -245,7 +245,7 @@ func TestServiceDeregister(t *testing.T) {
 		t.Fatalf("Fatal deregistering service. Err: %+v\n", err)
 	}
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * 1)
 }
 
 func TestServiceWatch(t *testing.T) {
@@ -277,7 +277,7 @@ func TestServiceWatch(t *testing.T) {
 		select {
 		case srvEvent := <-eventChan:
 			log.Infof("\n----\nReceived event: %+v\n----", srvEvent)
-		case <-time.After(time.Second * time.Duration(10)):
+		case <-time.After(time.Millisecond * time.Duration(10)):
 			service2Info := objdb.ServiceInfo{
 				ServiceName: "athena",
 				HostAddr:    "10.10.10.11",
@@ -300,7 +300,7 @@ func TestServiceWatch(t *testing.T) {
 				stopChan <- true
 
 				// wait a little and exit
-				time.Sleep(time.Second)
+				time.Sleep(time.Millisecond)
 
 				return
 			}
