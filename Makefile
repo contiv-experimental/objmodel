@@ -7,7 +7,10 @@ all: test build
 godep:
 	@if [ -z "`which godep`" ]; then go get -v github.com/kr/godep; fi
 
-checks:
+vet:
+	@(go tool | grep vet) || go get -v golang.org/x/tools/cmd/vet
+
+checks: vet
 	./checks "$(TO_BUILD)"
 
 build: godep checks
