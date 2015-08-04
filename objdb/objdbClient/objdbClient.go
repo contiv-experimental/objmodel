@@ -17,8 +17,7 @@ func NewClient() objdb.ObjdbApi {
 	plugin := objdb.GetPlugin(defaultConfStore)
 
 	// Initialize the objdb client
-	err := plugin.Init([]string{})
-	if err != nil {
+	if err := plugin.Init([]string{}); err != nil {
 		log.Errorf("Error initializing confstore plugin. Err: %v", err)
 		log.Fatal("Error initializing confstore plugin")
 	}
