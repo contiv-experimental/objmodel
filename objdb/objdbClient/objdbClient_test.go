@@ -168,8 +168,6 @@ func TestLockAcquireTimeout(t *testing.T) {
 			}
 			lock1.Release()
 
-			time.Sleep(time.Second * 3)
-
 			return
 		}
 	}
