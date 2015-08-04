@@ -1,6 +1,6 @@
 
 .PHONY: all build checks
-TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/objdbClient/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
+TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/client/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
 
 all: test build
 

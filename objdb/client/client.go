@@ -1,4 +1,4 @@
-package objdbClient
+package client
 
 import (
 	log "github.com/Sirupsen/logrus"
