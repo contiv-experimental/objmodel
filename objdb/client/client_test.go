@@ -1,4 +1,4 @@
-package objdbClient
+package client
 
 import (
 	"fmt"
