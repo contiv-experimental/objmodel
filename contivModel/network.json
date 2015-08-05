@@ -25,6 +25,9 @@
 				},
 				"subnet": {
 					"type": "string"
+				},
+				"defaultGw": {
+					"type": "string"
 				}
 			},
 			"link-sets": {
