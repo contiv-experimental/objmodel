@@ -75,9 +75,9 @@ type NetworkLinks struct {
 
 type Policy struct {
 	Key        string         `json:"key,omitempty"`
-	PolicyName string         `json:"policyName,omitempty"`
 	TenantName string         `json:"tenantName,omitempty"`
 	Rules      []string       `json:"rules,omitempty"`
+	PolicyName string         `json:"policyName,omitempty"`
 	LinkSets   PolicyLinkSets `json:"link-sets,omitempty"`
 	Links      PolicyLinks    `json:"links,omitempty"`
 }
@@ -92,18 +92,18 @@ type PolicyLinks struct {
 
 type Service struct {
 	Key            string          `json:"key,omitempty"`
-	Memory         string          `json:"memory,omitempty"`
 	Command        string          `json:"command,omitempty"`
 	Environment    []string        `json:"environment,omitempty"`
 	EndpointGroups []string        `json:"endpointGroups,omitempty"`
 	Networks       []string        `json:"networks,omitempty"`
 	VolumeProfile  string          `json:"volumeProfile,omitempty"`
 	TenantName     string          `json:"tenantName,omitempty"`
-	AppName        string          `json:"appName,omitempty"`
+	Memory         string          `json:"memory,omitempty"`
 	ImageName      string          `json:"imageName,omitempty"`
 	Cpu            string          `json:"cpu,omitempty"`
 	Scale          int64           `json:"scale,omitempty"`
 	ServiceName    string          `json:"serviceName,omitempty"`
+	AppName        string          `json:"appName,omitempty"`
 	LinkSets       ServiceLinkSets `json:"link-sets,omitempty"`
 	Links          ServiceLinks    `json:"links,omitempty"`
 }
@@ -121,11 +121,11 @@ type ServiceLinks struct {
 
 type ServiceInstance struct {
 	Key         string                  `json:"key,omitempty"`
-	TenantName  string                  `json:"tenantName,omitempty"`
 	AppName     string                  `json:"appName,omitempty"`
 	ServiceName string                  `json:"serviceName,omitempty"`
 	Volumes     []string                `json:"volumes,omitempty"`
 	InstanceID  string                  `json:"instanceId,omitempty"`
+	TenantName  string                  `json:"tenantName,omitempty"`
 	LinkSets    ServiceInstanceLinkSets `json:"link-sets,omitempty"`
 	Links       ServiceInstanceLinks    `json:"links,omitempty"`
 }
@@ -141,26 +141,30 @@ type ServiceInstanceLinks struct {
 type Tenant struct {
 	Key        string         `json:"key,omitempty"`
 	TenantName string         `json:"tenantName,omitempty"`
+	SubnetPool string         `json:"subnetPool,omitempty"`
+	SubnetLen  int64          `json:"subnetLen,omitempty"`
+	Vlans      string         `json:"vlans,omitempty"`
+	Vxlans     string         `json:"vxlans,omitempty"`
 	LinkSets   TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
-	Apps           map[string]modeldb.Link `json:"apps,omitempty"`
-	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
 	Policies       map[string]modeldb.Link `json:"policies,omitempty"`
 	Volumes        map[string]modeldb.Link `json:"volumes,omitempty"`
 	VolumeProfiles map[string]modeldb.Link `json:"volumeProfiles,omitempty"`
+	Networks       map[string]modeldb.Link `json:"networks,omitempty"`
+	Apps           map[string]modeldb.Link `json:"apps,omitempty"`
+	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
 }
 
 type Volume struct {
 	Key           string         `json:"key,omitempty"`
+	TenantName    string         `json:"tenantName,omitempty"`
+	DatastoreType string         `json:"datastoreType,omitempty"`
 	PoolName      string         `json:"poolName,omitempty"`
 	Size          string         `json:"size,omitempty"`
 	MountPoint    string         `json:"mountPoint,omitempty"`
 	VolumeName    string         `json:"volumeName,omitempty"`
-	TenantName    string         `json:"tenantName,omitempty"`
-	DatastoreType string         `json:"datastoreType,omitempty"`
 	LinkSets      VolumeLinkSets `json:"link-sets,omitempty"`
 	Links         VolumeLinks    `json:"links,omitempty"`
 }
@@ -175,12 +179,12 @@ type VolumeLinks struct {
 
 type VolumeProfile struct {
 	Key               string                `json:"key,omitempty"`
+	VolumeProfileName string                `json:"volumeProfileName,omitempty"`
+	TenantName        string                `json:"tenantName,omitempty"`
 	DatastoreType     string                `json:"datastoreType,omitempty"`
 	PoolName          string                `json:"poolName,omitempty"`
 	Size              string                `json:"size,omitempty"`
 	MountPoint        string                `json:"mountPoint,omitempty"`
-	VolumeProfileName string                `json:"volumeProfileName,omitempty"`
-	TenantName        string                `json:"tenantName,omitempty"`
 	LinkSets          VolumeProfileLinkSets `json:"link-sets,omitempty"`
 	Links             VolumeProfileLinks    `json:"links,omitempty"`
 }
@@ -486,6 +490,7 @@ func CreateApp(obj *App) error {
 		err := objCallbackHandler.AppCreate(obj)
 		if err != nil {
 			log.Errorf("AppCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.apps, obj.Key)
 			return err
 		}
 	}
@@ -690,6 +695,7 @@ func CreateEndpointGroup(obj *EndpointGroup) error {
 		err := objCallbackHandler.EndpointGroupCreate(obj)
 		if err != nil {
 			log.Errorf("EndpointGroupCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.endpointGroups, obj.Key)
 			return err
 		}
 	}
@@ -894,6 +900,7 @@ func CreateNetwork(obj *Network) error {
 		err := objCallbackHandler.NetworkCreate(obj)
 		if err != nil {
 			log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.networks, obj.Key)
 			return err
 		}
 	}
@@ -1098,6 +1105,7 @@ func CreatePolicy(obj *Policy) error {
 		err := objCallbackHandler.PolicyCreate(obj)
 		if err != nil {
 			log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.policys, obj.Key)
 			return err
 		}
 	}
@@ -1302,6 +1310,7 @@ func CreateService(obj *Service) error {
 		err := objCallbackHandler.ServiceCreate(obj)
 		if err != nil {
 			log.Errorf("ServiceCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.services, obj.Key)
 			return err
 		}
 	}
@@ -1506,6 +1515,7 @@ func CreateServiceInstance(obj *ServiceInstance) error {
 		err := objCallbackHandler.ServiceInstanceCreate(obj)
 		if err != nil {
 			log.Errorf("ServiceInstanceCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.serviceInstances, obj.Key)
 			return err
 		}
 	}
@@ -1710,6 +1720,7 @@ func CreateTenant(obj *Tenant) error {
 		err := objCallbackHandler.TenantCreate(obj)
 		if err != nil {
 			log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.tenants, obj.Key)
 			return err
 		}
 	}
@@ -1914,6 +1925,7 @@ func CreateVolume(obj *Volume) error {
 		err := objCallbackHandler.VolumeCreate(obj)
 		if err != nil {
 			log.Errorf("VolumeCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.volumes, obj.Key)
 			return err
 		}
 	}
@@ -2118,6 +2130,7 @@ func CreateVolumeProfile(obj *VolumeProfile) error {
 		err := objCallbackHandler.VolumeProfileCreate(obj)
 		if err != nil {
 			log.Errorf("VolumeProfileCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.volumeProfiles, obj.Key)
 			return err
 		}
 	}

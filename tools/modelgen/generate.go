@@ -287,6 +287,7 @@ func Create{{initialCap .}}(obj *{{initialCap .}}) error {
 		err := objCallbackHandler.{{initialCap .}}Create(obj)
 		if err != nil {
 			log.Errorf("{{initialCap .}}Create retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.{{.}}s, obj.Key)
 			return err
 		}
 	}

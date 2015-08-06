@@ -9,6 +9,18 @@
 				"tenantName": {
 					"type": "string",
 					"description": "Tenant Name"
+				},
+				"subnetPool": {
+					"type": "string"
+				},
+				"subnetLen": {
+					"type": "int"
+				},
+				"vlans": {
+					"type": "string"
+				},
+				"vxlans": {
+					"type": "string"
 				}
 			},
 			"link-sets": {

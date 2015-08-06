@@ -42,6 +42,12 @@ func AddLink(link *Link, obj ModelObj) {
 	link.ObjKey = obj.GetKey()
 }
 
+// RemoveLink removes a one way link
+func RemoveLink(link *Link, obj ModelObj) {
+	link.ObjType = ""
+	link.ObjKey = ""
+}
+
 // Add a link into linkset. initialize the linkset if required
 func AddLinkSet(linkSet *(map[string]Link), obj ModelObj) error {
 	// Allocate the linkset if its nil
@@ -54,6 +60,18 @@ func AddLinkSet(linkSet *(map[string]Link), obj ModelObj) error {
 		ObjType: obj.GetType(),
 		ObjKey:  obj.GetKey(),
 	}
+
+	return nil
+}
+
+func RemoveLinkSet(linkSet *(map[string]Link), obj ModelObj) error {
+	// check is linkset is nil
+	if *linkSet == nil {
+		return nil
+	}
+
+	// remove the link from map
+	delete(*linkSet, obj.GetKey())
 
 	return nil
 }
