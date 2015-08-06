@@ -7,6 +7,7 @@ package contivModel
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -201,7 +202,7 @@ type Collections struct {
 	apps             map[string]*App
 	endpointGroups   map[string]*EndpointGroup
 	networks         map[string]*Network
-	policys          map[string]*Policy
+	policies         map[string]*Policy
 	services         map[string]*Service
 	serviceInstances map[string]*ServiceInstance
 	tenants          map[string]*Tenant
@@ -211,45 +212,45 @@ type Collections struct {
 
 var collections Collections
 
-type Callbacks interface {
-	AppCreate(app *App) error
-	AppUpdate(app, params *App) error
-	AppDelete(app *App) error
-	EndpointGroupCreate(endpointGroup *EndpointGroup) error
-	EndpointGroupUpdate(endpointGroup, params *EndpointGroup) error
-	EndpointGroupDelete(endpointGroup *EndpointGroup) error
-	NetworkCreate(network *Network) error
-	NetworkUpdate(network, params *Network) error
-	NetworkDelete(network *Network) error
-	PolicyCreate(policy *Policy) error
-	PolicyUpdate(policy, params *Policy) error
-	PolicyDelete(policy *Policy) error
-	ServiceCreate(service *Service) error
-	ServiceUpdate(service, params *Service) error
-	ServiceDelete(service *Service) error
-	ServiceInstanceCreate(serviceInstance *ServiceInstance) error
-	ServiceInstanceUpdate(serviceInstance, params *ServiceInstance) error
-	ServiceInstanceDelete(serviceInstance *ServiceInstance) error
-	TenantCreate(tenant *Tenant) error
-	TenantUpdate(tenant, params *Tenant) error
-	TenantDelete(tenant *Tenant) error
-	VolumeCreate(volume *Volume) error
-	VolumeUpdate(volume, params *Volume) error
-	VolumeDelete(volume *Volume) error
-	VolumeProfileCreate(volumeProfile *VolumeProfile) error
-	VolumeProfileUpdate(volumeProfile, params *VolumeProfile) error
-	VolumeProfileDelete(volumeProfile *VolumeProfile) error
+type Handler struct {
+	AppCreate             func(*App) error
+	AppUpdate             func(*App, *App) error
+	AppDelete             func(*App) error
+	EndpointGroupCreate   func(*EndpointGroup) error
+	EndpointGroupUpdate   func(*EndpointGroup, *EndpointGroup) error
+	EndpointGroupDelete   func(*EndpointGroup) error
+	NetworkCreate         func(*Network) error
+	NetworkUpdate         func(*Network, *Network) error
+	NetworkDelete         func(*Network) error
+	PolicyCreate          func(*Policy) error
+	PolicyUpdate          func(*Policy, *Policy) error
+	PolicyDelete          func(*Policy) error
+	ServiceCreate         func(*Service) error
+	ServiceUpdate         func(*Service, *Service) error
+	ServiceDelete         func(*Service) error
+	ServiceInstanceCreate func(*ServiceInstance) error
+	ServiceInstanceUpdate func(*ServiceInstance, *ServiceInstance) error
+	ServiceInstanceDelete func(*ServiceInstance) error
+	TenantCreate          func(*Tenant) error
+	TenantUpdate          func(*Tenant, *Tenant) error
+	TenantDelete          func(*Tenant) error
+	VolumeCreate          func(*Volume) error
+	VolumeUpdate          func(*Volume, *Volume) error
+	VolumeDelete          func(*Volume) error
+	VolumeProfileCreate   func(*VolumeProfile) error
+	VolumeProfileUpdate   func(*VolumeProfile, *VolumeProfile) error
+	VolumeProfileDelete   func(*VolumeProfile) error
 }
 
-var objCallbackHandler Callbacks
+var objCallbackHandler *Handler
 
-func Init(handler Callbacks) {
+func Init(handler *Handler) {
 	objCallbackHandler = handler
 
 	collections.apps = make(map[string]*App)
 	collections.endpointGroups = make(map[string]*EndpointGroup)
 	collections.networks = make(map[string]*Network)
-	collections.policys = make(map[string]*Policy)
+	collections.policies = make(map[string]*Policy)
 	collections.services = make(map[string]*Service)
 	collections.serviceInstances = make(map[string]*ServiceInstance)
 	collections.tenants = make(map[string]*Tenant)
@@ -281,8 +282,7 @@ func makeHttpHandler(handlerFunc HttpApiFunc) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		} else {
 			// Send HTTP response as Json
-			err = writeJSON(w, http.StatusOK, resp)
-			if err != nil {
+			if err := writeJSON(w, http.StatusOK, resp); err != nil {
 				log.Errorf("Error generating json. Err: %v", err)
 			}
 		}
@@ -337,10 +337,10 @@ func AddRoutes(router *mux.Router) {
 	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDeleteNetwork))
 
 	// Register policy
-	route = "/api/policys/{key}/"
-	listRoute = "/api/policys/"
+	route = "/api/policies/{key}/"
+	listRoute = "/api/policies/"
 	log.Infof("Registering %s", route)
-	router.Path(listRoute).Methods("GET").HandlerFunc(makeHttpHandler(httpListPolicys))
+	router.Path(listRoute).Methods("GET").HandlerFunc(makeHttpHandler(httpListPolicies))
 	router.Path(route).Methods("GET").HandlerFunc(makeHttpHandler(httpGetPolicy))
 	router.Path(route).Methods("POST").HandlerFunc(makeHttpHandler(httpCreatePolicy))
 	router.Path(route).Methods("PUT").HandlerFunc(makeHttpHandler(httpCreatePolicy))
@@ -445,8 +445,7 @@ func httpCreateApp(w http.ResponseWriter, r *http.Request, vars map[string]strin
 	obj.Key = key
 
 	// Create the object
-	err = CreateApp(&obj)
-	if err != nil {
+	if err := CreateApp(&obj); err != nil {
 		log.Errorf("CreateApp error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -477,27 +476,32 @@ func CreateApp(obj *App) error {
 	// Check if object already exists
 	if collections.apps[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.AppUpdate(collections.apps[obj.Key], obj)
-		if err != nil {
-			log.Errorf("AppUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.AppUpdate != nil {
+			if err := objCallbackHandler.AppUpdate(collections.apps[obj.Key], obj); err != nil {
+				log.Errorf("AppUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("App create handler not found")
 		}
 	} else {
 		// save it in cache
 		collections.apps[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.AppCreate(obj)
-		if err != nil {
-			log.Errorf("AppCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.apps, obj.Key)
-			return err
+		if objCallbackHandler.AppCreate != nil {
+			if err := objCallbackHandler.AppCreate(obj); err != nil {
+				log.Errorf("AppCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.apps, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("App create handler not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving app %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -528,15 +532,17 @@ func DeleteApp(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.AppDelete(obj)
-	if err != nil {
-		log.Errorf("AppDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.AppDelete != nil {
+		if err := objCallbackHandler.AppDelete(obj); err != nil {
+			log.Errorf("AppDelete returned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("App delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting app %s. Err: %v", obj.Key, err)
 	}
 
@@ -590,8 +596,7 @@ func restoreApp() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var app App
-		err = json.Unmarshal([]byte(objStr), &app)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &app); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -650,8 +655,7 @@ func httpCreateEndpointGroup(w http.ResponseWriter, r *http.Request, vars map[st
 	obj.Key = key
 
 	// Create the object
-	err = CreateEndpointGroup(&obj)
-	if err != nil {
+	if err := CreateEndpointGroup(&obj); err != nil {
 		log.Errorf("CreateEndpointGroup error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -682,27 +686,32 @@ func CreateEndpointGroup(obj *EndpointGroup) error {
 	// Check if object already exists
 	if collections.endpointGroups[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.EndpointGroupUpdate(collections.endpointGroups[obj.Key], obj)
-		if err != nil {
-			log.Errorf("EndpointGroupUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.EndpointGroupUpdate != nil {
+			if err := objCallbackHandler.EndpointGroupUpdate(collections.endpointGroups[obj.Key], obj); err != nil {
+				log.Errorf("EndpointGroupUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("EndpointGroup update handler not found")
 		}
 	} else {
 		// save it in cache
 		collections.endpointGroups[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.EndpointGroupCreate(obj)
-		if err != nil {
-			log.Errorf("EndpointGroupCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.endpointGroups, obj.Key)
-			return err
+		if objCallbackHandler.EndpointGroupCreate != nil {
+			if err := objCallbackHandler.EndpointGroupCreate(obj); err != nil {
+				log.Errorf("EndpointGroupCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.endpointGroups, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("EndpointGroup create handler not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving endpointGroup %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -733,15 +742,18 @@ func DeleteEndpointGroup(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.EndpointGroupDelete(obj)
-	if err != nil {
-		log.Errorf("EndpointGroupDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.EndpointGroupDelete != nil {
+		if err := objCallbackHandler.EndpointGroupDelete(obj); err != nil {
+			log.Errorf("EndpointGroupDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("EndpointGroup delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting endpointGroup %s. Err: %v", obj.Key, err)
 	}
 
@@ -795,8 +807,7 @@ func restoreEndpointGroup() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var endpointGroup EndpointGroup
-		err = json.Unmarshal([]byte(objStr), &endpointGroup)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &endpointGroup); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -855,8 +866,7 @@ func httpCreateNetwork(w http.ResponseWriter, r *http.Request, vars map[string]s
 	obj.Key = key
 
 	// Create the object
-	err = CreateNetwork(&obj)
-	if err != nil {
+	if err := CreateNetwork(&obj); err != nil {
 		log.Errorf("CreateNetwork error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -887,27 +897,32 @@ func CreateNetwork(obj *Network) error {
 	// Check if object already exists
 	if collections.networks[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.NetworkUpdate(collections.networks[obj.Key], obj)
-		if err != nil {
-			log.Errorf("NetworkUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.NetworkUpdate != nil {
+			if err := objCallbackHandler.NetworkUpdate(collections.networks[obj.Key], obj); err != nil {
+				log.Errorf("NetworkUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Network update handler not found")
 		}
 	} else {
 		// save it in cache
 		collections.networks[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.NetworkCreate(obj)
-		if err != nil {
-			log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.networks, obj.Key)
-			return err
+		if objCallbackHandler.NetworkCreate != nil {
+			if err := objCallbackHandler.NetworkCreate(obj); err != nil {
+				log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.networks, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Network update handler not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving network %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -938,15 +953,17 @@ func DeleteNetwork(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.NetworkDelete(obj)
-	if err != nil {
-		log.Errorf("NetworkDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.NetworkDelete != nil {
+		if err := objCallbackHandler.NetworkDelete(obj); err != nil {
+			log.Errorf("NetworkDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Network delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting network %s. Err: %v", obj.Key, err)
 	}
 
@@ -1000,8 +1017,7 @@ func restoreNetwork() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var network Network
-		err = json.Unmarshal([]byte(objStr), &network)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &network); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -1014,11 +1030,11 @@ func restoreNetwork() error {
 }
 
 // LIST REST call
-func httpListPolicys(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
-	log.Debugf("Received httpListPolicys: %+v", vars)
+func httpListPolicies(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpListPolicies: %+v", vars)
 
 	list := make([]*Policy, 0)
-	for _, obj := range collections.policys {
+	for _, obj := range collections.policies {
 		list = append(list, obj)
 	}
 
@@ -1032,7 +1048,7 @@ func httpGetPolicy(w http.ResponseWriter, r *http.Request, vars map[string]strin
 
 	key := vars["key"]
 
-	obj := collections.policys[key]
+	obj := collections.policies[key]
 	if obj == nil {
 		log.Errorf("policy %s not found", key)
 		return nil, errors.New("policy not found")
@@ -1060,8 +1076,7 @@ func httpCreatePolicy(w http.ResponseWriter, r *http.Request, vars map[string]st
 	obj.Key = key
 
 	// Create the object
-	err = CreatePolicy(&obj)
-	if err != nil {
+	if err := CreatePolicy(&obj); err != nil {
 		log.Errorf("CreatePolicy error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -1090,29 +1105,34 @@ func httpDeletePolicy(w http.ResponseWriter, r *http.Request, vars map[string]st
 // Create a policy object
 func CreatePolicy(obj *Policy) error {
 	// Check if object already exists
-	if collections.policys[obj.Key] != nil {
+	if collections.policies[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.PolicyUpdate(collections.policys[obj.Key], obj)
-		if err != nil {
-			log.Errorf("PolicyUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.PolicyUpdate != nil {
+			if err := objCallbackHandler.PolicyUpdate(collections.policies[obj.Key], obj); err != nil {
+				log.Errorf("PolicyUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Policy update handler not found")
 		}
 	} else {
 		// save it in cache
-		collections.policys[obj.Key] = obj
+		collections.policies[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.PolicyCreate(obj)
-		if err != nil {
-			log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.policys, obj.Key)
-			return err
+		if objCallbackHandler.PolicyCreate != nil {
+			if err := objCallbackHandler.PolicyCreate(obj); err != nil {
+				log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.policys, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Policy update handler not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving policy %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -1122,7 +1142,7 @@ func CreatePolicy(obj *Policy) error {
 
 // Return a pointer to policy from collection
 func FindPolicy(key string) *Policy {
-	obj := collections.policys[key]
+	obj := collections.policies[key]
 	if obj == nil {
 		log.Errorf("policy %s not found", key)
 		return nil
@@ -1133,7 +1153,7 @@ func FindPolicy(key string) *Policy {
 
 // Delete a policy object
 func DeletePolicy(key string) error {
-	obj := collections.policys[key]
+	obj := collections.policies[key]
 	if obj == nil {
 		log.Errorf("policy %s not found", key)
 		return errors.New("policy not found")
@@ -1143,20 +1163,22 @@ func DeletePolicy(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.PolicyDelete(obj)
-	if err != nil {
-		log.Errorf("PolicyDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.PolicyDelete != nil {
+		if err := objCallbackHandler.PolicyDelete(obj); err != nil {
+			log.Errorf("PolicyDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Policy delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting policy %s. Err: %v", obj.Key, err)
 	}
 
 	// delete it from cache
-	delete(collections.policys, key)
+	delete(collections.policies, key)
 
 	return nil
 }
@@ -1205,14 +1227,13 @@ func restorePolicy() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var policy Policy
-		err = json.Unmarshal([]byte(objStr), &policy)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &policy); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
 
 		// add it to the collection
-		collections.policys[policy.Key] = &policy
+		collections.policies[policy.Key] = &policy
 	}
 
 	return nil
@@ -1265,8 +1286,7 @@ func httpCreateService(w http.ResponseWriter, r *http.Request, vars map[string]s
 	obj.Key = key
 
 	// Create the object
-	err = CreateService(&obj)
-	if err != nil {
+	if err := CreateService(&obj); err != nil {
 		log.Errorf("CreateService error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -1297,27 +1317,32 @@ func CreateService(obj *Service) error {
 	// Check if object already exists
 	if collections.services[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.ServiceUpdate(collections.services[obj.Key], obj)
-		if err != nil {
-			log.Errorf("ServiceUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.ServiceUpdate != nil {
+			if err := objCallbackHandler.ServiceUpdate(collections.services[obj.Key], obj); err != nil {
+				log.Errorf("ServiceUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Service update handler does not exist")
 		}
 	} else {
 		// save it in cache
 		collections.services[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.ServiceCreate(obj)
-		if err != nil {
-			log.Errorf("ServiceCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.services, obj.Key)
-			return err
+		if objCallbackHandler.ServiceCreate != nil {
+			if err := objCallbackHandler.ServiceCreate(obj); err != nil {
+				log.Errorf("ServiceCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.services, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Service create handler does not exist")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving service %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -1348,15 +1373,17 @@ func DeleteService(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.ServiceDelete(obj)
-	if err != nil {
-		log.Errorf("ServiceDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.ServiceDelete != nil {
+		if err := objCallbackHandler.ServiceDelete(obj); err != nil {
+			log.Errorf("ServiceDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Service delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting service %s. Err: %v", obj.Key, err)
 	}
 
@@ -1410,8 +1437,7 @@ func restoreService() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var service Service
-		err = json.Unmarshal([]byte(objStr), &service)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &service); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -1470,8 +1496,7 @@ func httpCreateServiceInstance(w http.ResponseWriter, r *http.Request, vars map[
 	obj.Key = key
 
 	// Create the object
-	err = CreateServiceInstance(&obj)
-	if err != nil {
+	if err := CreateServiceInstance(&obj); err != nil {
 		log.Errorf("CreateServiceInstance error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -1502,27 +1527,32 @@ func CreateServiceInstance(obj *ServiceInstance) error {
 	// Check if object already exists
 	if collections.serviceInstances[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.ServiceInstanceUpdate(collections.serviceInstances[obj.Key], obj)
-		if err != nil {
-			log.Errorf("ServiceInstanceUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.ServiceInstanceUpdate != nil {
+			if err := objCallbackHandler.ServiceInstanceUpdate(collections.serviceInstances[obj.Key], obj); err != nil {
+				log.Errorf("ServiceInstanceUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Service instance update handler not found")
 		}
 	} else {
 		// save it in cache
 		collections.serviceInstances[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.ServiceInstanceCreate(obj)
-		if err != nil {
-			log.Errorf("ServiceInstanceCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.serviceInstances, obj.Key)
-			return err
+		if objCallbackHandler.ServiceInstanceCreate != nil {
+			if err := objCallbackHandler.ServiceInstanceCreate(obj); err != nil {
+				log.Errorf("ServiceInstanceCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.serviceInstances, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Service instance create handler not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving serviceInstance %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -1553,15 +1583,17 @@ func DeleteServiceInstance(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.ServiceInstanceDelete(obj)
-	if err != nil {
-		log.Errorf("ServiceInstanceDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.ServiceInstanceDelete != nil {
+		if err := objCallbackHandler.ServiceInstanceDelete(obj); err != nil {
+			log.Errorf("ServiceInstanceDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Service instance delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting serviceInstance %s. Err: %v", obj.Key, err)
 	}
 
@@ -1615,8 +1647,7 @@ func restoreServiceInstance() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var serviceInstance ServiceInstance
-		err = json.Unmarshal([]byte(objStr), &serviceInstance)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &serviceInstance); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -1675,8 +1706,7 @@ func httpCreateTenant(w http.ResponseWriter, r *http.Request, vars map[string]st
 	obj.Key = key
 
 	// Create the object
-	err = CreateTenant(&obj)
-	if err != nil {
+	if err := CreateTenant(&obj); err != nil {
 		log.Errorf("CreateTenant error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -1707,27 +1737,32 @@ func CreateTenant(obj *Tenant) error {
 	// Check if object already exists
 	if collections.tenants[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.TenantUpdate(collections.tenants[obj.Key], obj)
-		if err != nil {
-			log.Errorf("TenantUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.TenantUpdate != nil {
+			if err := objCallbackHandler.TenantUpdate(collections.tenants[obj.Key], obj); err != nil {
+				log.Errorf("TenantUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Tenant update handler was not found")
 		}
 	} else {
 		// save it in cache
 		collections.tenants[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.TenantCreate(obj)
-		if err != nil {
-			log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.tenants, obj.Key)
-			return err
+		if objCallbackHandler.TenantCreate != nil {
+			if err := objCallbackHandler.TenantCreate(obj); err != nil {
+				log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.tenants, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Tenant create handler was not found")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving tenant %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -1758,15 +1793,17 @@ func DeleteTenant(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.TenantDelete(obj)
-	if err != nil {
-		log.Errorf("TenantDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.TenantDelete != nil {
+		if err := objCallbackHandler.TenantDelete(obj); err != nil {
+			log.Errorf("TenantDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Tenant delete handler not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting tenant %s. Err: %v", obj.Key, err)
 	}
 
@@ -1820,8 +1857,7 @@ func restoreTenant() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var tenant Tenant
-		err = json.Unmarshal([]byte(objStr), &tenant)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &tenant); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -1880,8 +1916,7 @@ func httpCreateVolume(w http.ResponseWriter, r *http.Request, vars map[string]st
 	obj.Key = key
 
 	// Create the object
-	err = CreateVolume(&obj)
-	if err != nil {
+	if err := CreateVolume(&obj); err != nil {
 		log.Errorf("CreateVolume error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -1912,27 +1947,31 @@ func CreateVolume(obj *Volume) error {
 	// Check if object already exists
 	if collections.volumes[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.VolumeUpdate(collections.volumes[obj.Key], obj)
-		if err != nil {
-			log.Errorf("VolumeUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.VolumeUpdate != nil {
+			if err := objCallbackHandler.VolumeUpdate(collections.volumes[obj.Key], obj); err != nil {
+				log.Errorf("VolumeUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Could not locate volume handler for update")
 		}
 	} else {
 		// save it in cache
 		collections.volumes[obj.Key] = obj
 
-		// Perform Create callback
-		err := objCallbackHandler.VolumeCreate(obj)
-		if err != nil {
-			log.Errorf("VolumeCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.volumes, obj.Key)
-			return err
+		if objCallbackHandler.VolumeUpdate != nil {
+			if err := objCallbackHandler.VolumeCreate(obj); err != nil {
+				log.Errorf("VolumeCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.volumes, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Could not locate volume handler for create")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving volume %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -1963,15 +2002,17 @@ func DeleteVolume(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.VolumeDelete(obj)
-	if err != nil {
-		log.Errorf("VolumeDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.VolumeDelete != nil {
+		if err := objCallbackHandler.VolumeDelete(obj); err != nil {
+			log.Errorf("VolumeDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Volume handler for delete not found")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting volume %s. Err: %v", obj.Key, err)
 	}
 
@@ -2025,8 +2066,7 @@ func restoreVolume() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var volume Volume
-		err = json.Unmarshal([]byte(objStr), &volume)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &volume); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}
@@ -2085,8 +2125,7 @@ func httpCreateVolumeProfile(w http.ResponseWriter, r *http.Request, vars map[st
 	obj.Key = key
 
 	// Create the object
-	err = CreateVolumeProfile(&obj)
-	if err != nil {
+	if err := CreateVolumeProfile(&obj); err != nil {
 		log.Errorf("CreateVolumeProfile error for: %+v. Err: %v", obj, err)
 		return nil, err
 	}
@@ -2117,27 +2156,31 @@ func CreateVolumeProfile(obj *VolumeProfile) error {
 	// Check if object already exists
 	if collections.volumeProfiles[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.VolumeProfileUpdate(collections.volumeProfiles[obj.Key], obj)
-		if err != nil {
-			log.Errorf("VolumeProfileUpdate retruned error for: %+v. Err: %v", obj, err)
-			return err
+		if objCallbackHandler.VolumeProfileUpdate != nil {
+			if err := objCallbackHandler.VolumeProfileUpdate(collections.volumeProfiles[obj.Key], obj); err != nil {
+				log.Errorf("VolumeProfileUpdate retruned error for: %+v. Err: %v", obj, err)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Volume profile update handler not registered")
 		}
 	} else {
 		// save it in cache
 		collections.volumeProfiles[obj.Key] = obj
-
-		// Perform Create callback
-		err := objCallbackHandler.VolumeProfileCreate(obj)
-		if err != nil {
-			log.Errorf("VolumeProfileCreate retruned error for: %+v. Err: %v", obj, err)
-			delete(collections.volumeProfiles, obj.Key)
-			return err
+		if objCallbackHandler.VolumeProfileCreate != nil {
+			// Perform Create callback
+			if err := objCallbackHandler.VolumeProfileCreate(obj); err != nil {
+				log.Errorf("VolumeProfileCreate retruned error for: %+v. Err: %v", obj, err)
+				delete(collections.volumeProfiles, obj.Key)
+				return err
+			}
+		} else {
+			return fmt.Errorf("Volume profile update handler not registered")
 		}
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
-	if err != nil {
+	if err := obj.Write(); err != nil {
 		log.Errorf("Error saving volumeProfile %s to db. Err: %v", obj.Key, err)
 		return err
 	}
@@ -2168,15 +2211,17 @@ func DeleteVolumeProfile(key string) error {
 	obj.Key = key
 
 	// Perform callback
-	err := objCallbackHandler.VolumeProfileDelete(obj)
-	if err != nil {
-		log.Errorf("VolumeProfileDelete retruned error for: %+v. Err: %v", obj, err)
-		return err
+	if objCallbackHandler.VolumeProfileDelete != nil {
+		if err := objCallbackHandler.VolumeProfileDelete(obj); err != nil {
+			log.Errorf("VolumeProfileDelete retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		return fmt.Errorf("Volume profile delete handler not registered")
 	}
 
 	// delete it from modeldb
-	err = obj.Delete()
-	if err != nil {
+	if err := obj.Delete(); err != nil {
 		log.Errorf("Error deleting volumeProfile %s. Err: %v", obj.Key, err)
 	}
 
@@ -2230,8 +2275,7 @@ func restoreVolumeProfile() error {
 	for _, objStr := range strList {
 		// Parse the json model
 		var volumeProfile VolumeProfile
-		err = json.Unmarshal([]byte(objStr), &volumeProfile)
-		if err != nil {
+		if err := json.Unmarshal([]byte(objStr), &volumeProfile); err != nil {
 			log.Errorf("Error parsing object %s, Err %v", objStr, err)
 			return err
 		}

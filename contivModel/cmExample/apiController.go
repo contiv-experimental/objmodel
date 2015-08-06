@@ -29,18 +29,50 @@ import (
 )
 
 type ApiController struct {
-	router *mux.Router
+	router  *mux.Router
+	handler *contivModel.Handler
 }
 
 var apiCtrler *ApiController
 
 // Create a new controller
 func NewApiController(router *mux.Router) *ApiController {
-	ctrler := new(ApiController)
-	ctrler.router = router
+	ctrler := &ApiController{
+		router: router,
+	}
+
+	ctrler.handler = &contivModel.Handler{
+		AppCreate:             ctrler.AppCreate,
+		AppUpdate:             ctrler.AppUpdate,
+		AppDelete:             ctrler.AppDelete,
+		EndpointGroupCreate:   ctrler.EndpointGroupCreate,
+		EndpointGroupUpdate:   ctrler.EndpointGroupUpdate,
+		EndpointGroupDelete:   ctrler.EndpointGroupDelete,
+		NetworkCreate:         ctrler.NetworkCreate,
+		NetworkUpdate:         ctrler.NetworkUpdate,
+		NetworkDelete:         ctrler.NetworkDelete,
+		PolicyCreate:          ctrler.PolicyCreate,
+		PolicyUpdate:          ctrler.PolicyUpdate,
+		PolicyDelete:          ctrler.PolicyDelete,
+		ServiceCreate:         ctrler.ServiceCreate,
+		ServiceUpdate:         ctrler.ServiceUpdate,
+		ServiceDelete:         ctrler.ServiceDelete,
+		ServiceInstanceCreate: ctrler.ServiceInstanceCreate,
+		ServiceInstanceUpdate: ctrler.ServiceInstanceUpdate,
+		ServiceInstanceDelete: ctrler.ServiceInstanceDelete,
+		TenantCreate:          ctrler.TenantCreate,
+		TenantUpdate:          ctrler.TenantUpdate,
+		TenantDelete:          ctrler.TenantDelete,
+		VolumeCreate:          ctrler.VolumeCreate,
+		VolumeUpdate:          ctrler.VolumeUpdate,
+		VolumeDelete:          ctrler.VolumeDelete,
+		VolumeProfileCreate:   ctrler.VolumeProfileCreate,
+		VolumeProfileUpdate:   ctrler.VolumeProfileUpdate,
+		VolumeProfileDelete:   ctrler.VolumeProfileDelete,
+	}
 
 	// initialize the model objects
-	contivModel.Init(ctrler)
+	contivModel.Init(ctrler.handler)
 
 	// Register routes
 	contivModel.AddRoutes(router)
