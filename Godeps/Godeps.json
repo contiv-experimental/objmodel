@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/contiv/objmodel",
-	"GoVersion": "go1.4",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
