@@ -1123,7 +1123,7 @@ func CreatePolicy(obj *Policy) error {
 		if objCallbackHandler.PolicyCreate != nil {
 			if err := objCallbackHandler.PolicyCreate(obj); err != nil {
 				log.Errorf("PolicyCreate retruned error for: %+v. Err: %v", obj, err)
-				delete(collections.policys, obj.Key)
+				delete(collections.policies, obj.Key)
 				return err
 			}
 		} else {
