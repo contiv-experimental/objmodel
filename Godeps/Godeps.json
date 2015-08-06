@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/contiv/objmodel",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.4",
 	"Packages": [
 		"./..."
 	],
@@ -11,9 +11,19 @@
 			"Rev": "8bca2664072173a3c71db4c28ca8d304079b1787"
 		},
 		{
-			"ImportPath": "github.com/coreos/go-etcd/etcd",
-			"Comment": "v2.0.0-22-g9847b93",
-			"Rev": "9847b93751a5fbaf227b893d172cee0104ac6427"
+			"ImportPath": "github.com/contiv/go-etcd/etcd",
+			"Comment": "v0.4.6-6-g4734e7a",
+			"Rev": "4734e7aca379f0d7fcdf04fbb2101696a4b45ce8"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/etcdserver/etcdhttp/httptypes",
+			"Comment": "v2.1.0-alpha.0-51-gb24dd8e",
+			"Rev": "b24dd8e4e67d7203c5a68cd43de4f6ffcfff5e66"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/types",
+			"Comment": "v2.1.0-alpha.0-51-gb24dd8e",
+			"Rev": "b24dd8e4e67d7203c5a68cd43de4f6ffcfff5e66"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -22,10 +32,6 @@
 		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
-		},
-		{
-			"ImportPath": "github.com/ugorji/go/codec",
-			"Rev": "03e33114d4d60a1f37150325e15f51b0fa6fc4f6"
 		}
 	]
 }

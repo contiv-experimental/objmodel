@@ -10,7 +10,7 @@ import (
 	api "github.com/contiv/objmodel/objdb"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/coreos/go-etcd/etcd"
+	"github.com/contiv/go-etcd/etcd"
 )
 
 const SERVICE_TTL = 60

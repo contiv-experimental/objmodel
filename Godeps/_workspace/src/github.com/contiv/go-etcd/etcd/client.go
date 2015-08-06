@@ -15,6 +15,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"github.com/coreos/etcd/etcdserver/etcdhttp/httptypes"
 )
 
 // See SetConsistency for how to use these constants.
@@ -42,17 +44,10 @@ type Config struct {
 	Consistency string        `json:"consistency"`
 }
 
-type credentials struct {
-	username string
-	password string
-}
-
 type Client struct {
 	config      Config   `json:"config"`
 	cluster     *Cluster `json:"cluster"`
 	httpClient  *http.Client
-	credentials *credentials
-	transport   *http.Transport
 	persistence io.Writer
 	cURLch      chan string
 	// CheckRetry can be used to control the policy for failed requests
@@ -177,27 +172,17 @@ func NewClientFromReader(reader io.Reader) (*Client, error) {
 // Override the Client's HTTP Transport object
 func (c *Client) SetTransport(tr *http.Transport) {
 	c.httpClient.Transport = tr
-	c.transport = tr
-}
-
-func (c *Client) SetCredentials(username, password string) {
-	c.credentials = &credentials{username, password}
-}
-
-func (c *Client) Close() {
-	c.transport.DisableKeepAlives = true
-	c.transport.CloseIdleConnections()
 }
 
 // initHTTPClient initializes a HTTP client for etcd client
 func (c *Client) initHTTPClient() {
-	c.transport = &http.Transport{
-		Dial: c.DefaultDial,
+	tr := &http.Transport{
+		Dial: c.dial,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
 	}
-	c.httpClient = &http.Client{Transport: c.transport}
+	c.httpClient = &http.Client{Transport: tr}
 }
 
 // initHTTPClient initializes a HTTPS client for etcd client
@@ -218,7 +203,7 @@ func (c *Client) initHTTPSClient(cert, key string) error {
 
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
-		Dial:            c.DefaultDial,
+		Dial:            c.dial,
 	}
 
 	c.httpClient = &http.Client{Transport: tr}
@@ -306,16 +291,12 @@ func (c *Client) GetCluster() []string {
 }
 
 // SyncCluster updates the cluster information using the internal machine list.
-// If no members are found, the intenral machine list is left untouched.
 func (c *Client) SyncCluster() bool {
 	return c.internalSyncCluster(c.cluster.Machines)
 }
 
 // internalSyncCluster syncs cluster information using the given machine list.
 func (c *Client) internalSyncCluster(machines []string) bool {
-	// comma-separated list of machines in the cluster.
-	members := ""
-
 	for _, machine := range machines {
 		httpPath := c.createHttpPath(machine, path.Join(version, "members"))
 		resp, err := c.httpClient.Get(httpPath)
@@ -324,54 +305,31 @@ func (c *Client) internalSyncCluster(machines []string) bool {
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK { // fall-back to old endpoint
-			httpPath := c.createHttpPath(machine, path.Join(version, "machines"))
-			resp, err := c.httpClient.Get(httpPath)
-			if err != nil {
-				// try another machine in the cluster
-				continue
-			}
-			b, err := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				// try another machine in the cluster
-				continue
-			}
-			members = string(b)
-		} else {
-			b, err := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				// try another machine in the cluster
-				continue
-			}
-
-			var mCollection memberCollection
-			if err := json.Unmarshal(b, &mCollection); err != nil {
-				// try another machine
-				continue
-			}
-
-			urls := make([]string, 0)
-			for _, m := range mCollection {
-				urls = append(urls, m.ClientURLs...)
-			}
-
-			members = strings.Join(urls, ",")
-		}
-
-		// We should never do an empty cluster update.
-		if members == "" {
+		b, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			// try another machine in the cluster
 			continue
 		}
 
+		var mCollection httptypes.MemberCollection
+		if err := json.Unmarshal(b, &mCollection); err != nil {
+			// try another machine
+			continue
+		}
+
+		urls := make([]string, 0)
+		for _, m := range mCollection {
+			urls = append(urls, m.ClientURLs...)
+		}
+
 		// update Machines List
-		c.cluster.updateFromStr(members)
+		c.cluster.updateFromStr(strings.Join(urls, ","))
+
 		logger.Debug("sync.machines ", c.cluster.Machines)
 		c.saveConfig()
 		return true
 	}
-
 	return false
 }
 
@@ -391,15 +349,29 @@ func (c *Client) createHttpPath(serverName string, _path string) string {
 	return u.String()
 }
 
-// DefaultDial attempts to open a TCP connection to the provided address, explicitly
+// dial attempts to open a TCP connection to the provided address, explicitly
 // enabling keep-alives with a one-second interval.
-func (c *Client) DefaultDial(network, addr string) (net.Conn, error) {
-	dialer := net.Dialer{
-		Timeout:   c.config.DialTimeout,
-		KeepAlive: time.Second,
+func (c *Client) dial(network, addr string) (net.Conn, error) {
+	conn, err := net.DialTimeout(network, addr, c.config.DialTimeout)
+	if err != nil {
+		return nil, err
 	}
 
-	return dialer.Dial(network, addr)
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		return nil, errors.New("Failed type-assertion of net.Conn as *net.TCPConn")
+	}
+
+	// Keep TCP alive to check whether or not the remote machine is down
+	if err = tcpConn.SetKeepAlive(true); err != nil {
+		return nil, err
+	}
+
+	if err = tcpConn.SetKeepAlivePeriod(time.Second); err != nil {
+		return nil, err
+	}
+
+	return tcpConn, nil
 }
 
 func (c *Client) OpenCURL() {
