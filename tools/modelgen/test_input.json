@@ -2,6 +2,22 @@
 	"name": "contivModel",
 	"objects": [
 		{
+			"name": "tenant",
+			"type": "object",
+			"key": ["tenantName"],
+			"properties": {
+				"tenantName": {
+					"type": "string",
+					"description": "Tenant Name"
+				}
+			},
+			"link-sets": {
+				"networks": {
+					"ref": "network"
+				}
+			}
+		},
+		{
 			"name": "network",
 			"type": "object",
 			"key": ["tenantName", "networkName" ],

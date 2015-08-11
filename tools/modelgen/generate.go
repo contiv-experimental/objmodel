@@ -19,14 +19,31 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"regexp"
-	"strings"
 	"text/template"
-	"unicode"
-	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
 )
+
+// GenerateGo generates go code for the schema
+func (s *Schema) GenerateGo() (string, error) {
+	// Generate file headers
+	outStr := s.GenerateGoHdrs()
+
+	// Generate structs
+	structStr, err := s.GenerateGoStructs()
+	if err != nil {
+		log.Errorf("Error generating go structs. Err: %v", err)
+		return "", err
+	}
+
+	// Merge the header and struct
+	outStr = outStr + structStr
+
+	// Merge rest handler
+	outStr = outStr + s.GenerateGoFuncs()
+
+	return outStr, nil
+}
 
 // GenerateGoStructs generates go code from a schema
 func (s *Schema) GenerateGoStructs() (string, error) {
@@ -88,6 +105,7 @@ package {{.Name}}
 
 import (
 	"errors"
+	"regexp"
 	"net/http"
 	"encoding/json"
 	"github.com/contiv/objmodel/objdb/modeldb"
@@ -168,7 +186,7 @@ func AddRoutes(router *mux.Router) {
 	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDelete{{initialCap .}}))
 `
 	// Output the functions and routes
-	rfTmpl, _ := template.New("routeTmpl").Parse(routeFunc)
+	rfTmpl, _ := template.New("routeFunc").Parse(routeFunc)
 	rfTmpl.Execute(&buf, "")
 	goStr = goStr + buf.String()
 
@@ -271,10 +289,17 @@ func httpDelete{{initialCap .}}(w http.ResponseWriter, r *http.Request, vars map
 
 // Create a {{.}} object
 func Create{{initialCap .}}(obj *{{initialCap .}}) error {
+	// Validate parameters
+	err := Validate{{initialCap .}}(obj)
+	if err != nil {
+		log.Errorf("Validate{{initialCap .}} retruned error for: %+v. Err: %v", obj, err)
+		return err
+	}
+
 	// Check if object already exists
 	if collections.{{.}}s[obj.Key] != nil {
 		// Perform Update callback
-		err := objCallbackHandler.{{initialCap .}}Update(collections.{{.}}s[obj.Key], obj)
+		err = objCallbackHandler.{{initialCap .}}Update(collections.{{.}}s[obj.Key], obj)
 		if err != nil {
 			log.Errorf("{{initialCap .}}Update retruned error for: %+v. Err: %v", obj, err)
 			return err
@@ -284,7 +309,7 @@ func Create{{initialCap .}}(obj *{{initialCap .}}) error {
 		collections.{{.}}s[obj.Key] = obj
 
 		// Perform Create callback
-		err := objCallbackHandler.{{initialCap .}}Create(obj)
+		err = objCallbackHandler.{{initialCap .}}Create(obj)
 		if err != nil {
 			log.Errorf("{{initialCap .}}Create retruned error for: %+v. Err: %v", obj, err)
 			delete(collections.{{.}}s, obj.Key)
@@ -293,7 +318,7 @@ func Create{{initialCap .}}(obj *{{initialCap .}}) error {
 	}
 
 	// Write it to modeldb
-	err := obj.Write()
+	err = obj.Write()
 	if err != nil {
 		log.Errorf("Error saving {{.}} %s to db. Err: %v", obj.Key, err)
 		return err
@@ -320,9 +345,6 @@ func Delete{{initialCap .}}(key string) error {
 		log.Errorf("{{.}} %s not found", key)
 		return errors.New("{{.}} not found")
 	}
-
-	// set the key
-	obj.Key = key
 
 	// Perform callback
 	err := objCallbackHandler.{{initialCap .}}Delete(obj)
@@ -404,7 +426,7 @@ func restore{{initialCap .}}() error {
 	for _, obj := range s.Objects {
 		var buf bytes.Buffer
 		// Create a template, add the function map, and parse the text.
-		tmpl, err := template.New("routeTmpl").Funcs(funcMap).Parse(handlerFuncs)
+		tmpl, err := template.New("handlerFuncs").Funcs(funcMap).Parse(handlerFuncs)
 		if err != nil {
 			log.Fatalf("parsing: %s", err)
 		}
@@ -416,6 +438,12 @@ func restore{{initialCap .}}() error {
 		}
 
 		goStr = goStr + buf.String()
+
+		//  Generate object validators
+		objStr, err := obj.GenerateValidate()
+		if err == nil {
+			goStr = goStr + objStr
+		}
 	}
 
 	return goStr
@@ -458,15 +486,7 @@ func (obj *Object) GenerateGoStructs() (string, error) {
 		}
 		goStr = goStr + fmt.Sprintf("}\n\n")
 	}
-	/*
-		// Define each link-sets
-		for _, linkSet := range obj.LinkSets {
-			subStr, err := linkSet.GenerateGoStructs()
-			if err == nil {
-				goStr = goStr + subStr
-			}
-		}
-	*/
+
 	// Define object's links
 	if len(obj.Links) > 0 {
 		goStr = goStr + fmt.Sprintf("type %sLinks struct {\n", objName)
@@ -475,39 +495,89 @@ func (obj *Object) GenerateGoStructs() (string, error) {
 		}
 		goStr = goStr + fmt.Sprintf("}\n\n")
 	}
-	/*
-		// define each link
-		for _, link := range obj.Links {
-			subStr, err := link.GenerateGoStructs()
-			if err == nil {
-				goStr = goStr + subStr
-			}
-		}
-	*/
 
 	return goStr, nil
 }
 
-func (ls *LinkSet) GenerateGoStructs() (string, error) {
+func (obj *Object) GenerateValidate() (string, error) {
 	var goStr string
 
-	goStr = goStr + fmt.Sprintf("type %sLinkSet struct {\n", ls.Name)
-	goStr = goStr + fmt.Sprintf("	Type	string		`json:\"type,omitempty\"`\n")
-	goStr = goStr + fmt.Sprintf("	Key		string		`json:\"key,omitempty\"`\n")
-	goStr = goStr + fmt.Sprintf("	%s		*%s			`json:\"-\"`\n", ls.Ref, initialCap(ls.Ref))
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	funcMap := template.FuncMap{
+		"initialCap": initialCap,
+	}
 
-	return goStr, nil
+	validateFunc := `
+// Validate a {{.Name}} object
+func Validate{{initialCap .Name}}(obj *{{initialCap .Name}}) error {
+	// Validate key is correct
+	keyStr := {{range $index, $element := .Key}}{{if eq 0 $index }}obj.{{initialCap .}} {{else}}+ ":" + obj.{{initialCap .}} {{end}}{{end}}
+	if obj.Key != keyStr {
+		log.Errorf("Expecting {{initialCap .Name}} Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
+	{{range $element := .Properties}}{{if eq $element.Type "int"}}{{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == 0 {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Min 0.0}}
+	if obj.{{initialCap $element.Name}} < {{$element.Min}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{if ne $element.Max 0.0}}
+	if obj.{{initialCap $element.Name}} > {{$element.Max}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{else if eq $element.Type "number"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == 0 {
+		obj.{{$element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Min 0.0}}
+	if obj.{{initialCap $element.Name}} < {{$element.Min}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{if ne $element.Max 0.0}}
+	if obj.{{initialCap $element.Name}} > {{$element.Max}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{else if eq $element.Type "bool"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == false {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{else if eq $element.Type "string"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == "" {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Length 0}}
+	if len(obj.{{initialCap $element.Name}}) > {{$element.Length}} {
+		return errors.New("{{$element.Name}} string too long")
+	}
+{{end}} {{if ne $element.Format ""}}
+	{{$element.Name}}Match := regexp.MustCompile("{{$element.Format}}")
+	if {{$element.Name}}Match.MatchString(obj.{{initialCap $element.Name}}) == false {
+		return errors.New("{{$element.Name}} string invalid format")
+	}
+{{end}} {{end}} {{end}}
+
+	return nil
 }
+`
 
-func (link *Link) GenerateGoStructs() (string, error) {
-	var goStr string
+	var buf bytes.Buffer
+	// Create a template, add the function map, and parse the text.
+	tmpl, err := template.New("validateFunc").Funcs(funcMap).Parse(validateFunc)
+	if err != nil {
+		log.Fatalf("parsing: %s", err)
+	}
 
-	goStr = goStr + fmt.Sprintf("type %sLink struct {\n", link.Name)
-	goStr = goStr + fmt.Sprintf("	Type	string		`json:\"type,omitempty\"`\n")
-	goStr = goStr + fmt.Sprintf("	Key		string		`json:\"key,omitempty\"`\n")
-	goStr = goStr + fmt.Sprintf("	%s		*%s		`json:\"-\"`\n", link.Ref, initialCap(link.Ref))
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	// Run the template.
+	err = tmpl.Execute(&buf, obj)
+	if err != nil {
+		log.Fatalf("execution: %s", err)
+	}
+
+	goStr = goStr + buf.String()
 
 	return goStr, nil
 }
@@ -556,46 +626,4 @@ func (prop *Property) GenerateGoStructs() (string, error) {
 	}
 
 	return goStr, nil
-}
-
-/*********************** Helper funcs *************************/
-var (
-	newlines  = regexp.MustCompile(`(?m:\s*$)`)
-	acronyms  = regexp.MustCompile(`(Url|Http|Id|Io|Uuid|Api|Uri|Ssl|Cname|Oauth|Otp)$`)
-	camelcase = regexp.MustCompile(`(?m)[-.$/:_{}\s]`)
-)
-
-func initialCap(ident string) string {
-	if ident == "" {
-		panic("blank identifier")
-	}
-	return depunct(ident, true)
-}
-
-func initialLow(ident string) string {
-	if ident == "" {
-		panic("blank identifier")
-	}
-	return depunct(ident, false)
-}
-
-func depunct(ident string, initialCap bool) string {
-	matches := camelcase.Split(ident, -1)
-	for i, m := range matches {
-		if initialCap || i > 0 {
-			m = capFirst(m)
-		}
-		matches[i] = acronyms.ReplaceAllStringFunc(m, func(c string) string {
-			if len(c) > 4 {
-				return strings.ToUpper(c[:2]) + c[2:]
-			}
-			return strings.ToUpper(c)
-		})
-	}
-	return strings.Join(matches, "")
-}
-
-func capFirst(ident string) string {
-	r, n := utf8.DecodeRuneInString(ident)
-	return string(unicode.ToUpper(r)) + ident[n:]
 }

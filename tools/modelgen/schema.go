@@ -25,6 +25,7 @@ type Schema struct {
 type Object struct {
 	Name       string               `json:"name,omitempty"`
 	Type       string               `json:"type,omitempty"`
+	Key        []string             `json:"key,omitempty"`
 	Properties map[string]*Property `json:"properties,omitempty"`
 	LinkSets   map[string]*LinkSet  `json:"link-sets,omitempty"`
 	Links      map[string]*Link     `json:"links,omitempty"`
@@ -32,11 +33,16 @@ type Object struct {
 
 // Property represents a property of an object
 type Property struct {
-	Name        string `json:"-"`
-	Type        string `json:"type,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Items       string `json:"items,omitempty"`
+	Name        string  `json:"-"`
+	Type        string  `json:"type,omitempty"`
+	Title       string  `json:"title,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Items       string  `json:"items,omitempty"`
+	Min         float64 `json:"min,omitempty"`
+	Max         float64 `json:"max,omitempty"`
+	Length      uint    `json:"length,omitempty"`
+	Default     string  `json:"default,omitempty"`
+	Format      string  `json:"format,omitempty"`
 }
 
 type LinkSet struct {

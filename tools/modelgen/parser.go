@@ -55,6 +55,14 @@ func ParseSchema(input []byte) (*Schema, error) {
 			}
 		}
 
+		// Make sure key properties exists
+		for _, keyField := range obj.Key {
+			if obj.Properties[keyField] == nil {
+				return nil, errors.New("Key field does not exist")
+			}
+		}
+
+		// parse links and linksets
 		for lsName, ls := range obj.LinkSets {
 			// set the name
 			ls.Name = initialCap(obj.Name) + initialCap(lsName)

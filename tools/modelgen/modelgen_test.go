@@ -16,6 +16,10 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 
 	log "github.com/Sirupsen/logrus"
@@ -23,61 +27,12 @@ import (
 
 // Simple test to parse json schema
 func TestParseJsonSchema(t *testing.T) {
-	inputStr := `{
-		"objects": [
-			{
-				"name": "tenant",
-				"type": "object",
-				"key": "string",
-				"properties": {
-					"name": {
-						"type": "string",
-						"description": "Tenant Name"
-					}
-				},
-				"link-sets": {
-					"networks": {
-						"ref": "network"
-					},
-					"apps": {
-						"ref": "app"
-					},
-					"endpoint-groups": {
-						"ref": "endpoint-group"
-					}
-				}
-			},
-			{
-				"name": "network",
-				"type": "object",
-				"key": "string",
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"isPublic": {
-						"type": "bool"
-					},
-					"isPrivate": {
-						"type": "bool"
-					},
-					"encap": {
-						"type": "string"
-					},
-					"subnet": {
-						"type": "string"
-					}
-				},
-				"links": {
-					"tenant": {
-						"ref": "tenant"
-					}
-				}
-			}
-		]
+	inputStr, err := ioutil.ReadFile("./test_input.json")
+	if err != nil {
+		t.Fatalf("Could not read expected output file ./test_input.json")
+	}
 
-	}`
-
+	// Parse the input json string
 	schema, err := ParseSchema([]byte(inputStr))
 	if err != nil {
 		t.Fatalf("Error parsing json schema. Err: %v", err)
@@ -85,91 +40,28 @@ func TestParseJsonSchema(t *testing.T) {
 
 	log.Printf("Parsed json schema: %+v", schema)
 
-	goStr, err := schema.GenerateGoStructs()
+	// Generate the code
+	goStr, err := schema.GenerateGo()
 	if err != nil {
 		t.Fatalf("Error generating go code. Err: %v", err)
 	}
 
-	log.Printf("Generated go code: \n\n%s", goStr)
-}
+	// Write the output
+	log.Debugf("Generated go code: \n\n%s", goStr)
+	gotFile, _ := os.Create("./test_got.txt")
+	fmt.Fprintln(gotFile, goStr)
 
-type TenantNetworksLinkSet struct {
-	Type    string
-	Key     string
-	network *Network
-}
+	// Read the expected output file
+	b, err := ioutil.ReadFile("./test_exp.txt")
+	if err != nil {
+		t.Fatalf("Could not read expected output file ./test_exp.txt")
+	}
 
-type TenantEndPointLinkSet struct {
-	Type string
-	Key  string
-	// endpoint 	*Endpoint
-}
-type TenantLinkSets struct {
-	Networks  []TenantNetworksLinkSet
-	Endpoints []TenantEndPointLinkSet
-}
-
-type Tenant struct {
-	Key      string
-	Name     string
-	LinkSets TenantLinkSets
-}
-
-type NetworkTenantLink struct {
-	Type   string
-	Key    string
-	tenant *Tenant
-}
-
-type NetworkLinks struct {
-	Tenants []NetworkTenantLink
-}
-
-type Network struct {
-	Key          string
-	Name         string
-	Reachability string
-	Encap        string
-	Subnet       string
-	Links        NetworkLinks
-}
-
-// Sample json objects
-/*
-{
-	tenants: {
-		"default": {
-			key: "default",
-			name: "default",
-			link-sets {
-				networks: [
-					"default:privateNet": {
-						type: "network",
-						key: "default:privateNet"
-					},
-					"default:publicNet": {
-						type: "network",
-						key: "default:publicNet"
-					}
-				]
-			}
-		}
-	},
-	networks: {
-		"default/privateNet": {
-			key: "default/privateNet",
-			name: "privateNet",
-			tenantName: "default",
-			reachability: "private",
-			encap: "vxlan",
-			subnet: "20.1.1.0/24"
-			links: {
-				tenant: {
-					type: "tenant",
-					key: "default"
-				}
-			}
+	// Make sure every line in expected output is present in the gotten output
+	exp_lines := strings.Split(string(b), "\n")
+	for _, line := range exp_lines {
+		if !strings.Contains(goStr, line) {
+			t.Fatalf("Generated code does not match expected output")
 		}
 	}
 }
-*/

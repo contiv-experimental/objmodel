@@ -69,20 +69,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Generate file headers
-	outStr := schema.GenerateGoHdrs()
-
-	// Generate structs
-	structStr, err := schema.GenerateGoStructs()
+	// Generate Go code
+	outStr, err := schema.GenerateGo()
 	if err != nil {
 		log.Fatalf("Error generating go structs. Err: %v", err)
 	}
-
-	// Merge the header and struct
-	outStr = outStr + structStr
-
-	// Merge rest handler
-	outStr = outStr + schema.GenerateGoFuncs()
 
 	outPath := "./"
 	if *output != "" {

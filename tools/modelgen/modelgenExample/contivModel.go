@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb/modeldb"
@@ -17,14 +18,16 @@ import (
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
 
 type Network struct {
-	Key       string       `json:"key,omitempty"`
-	Name      string       `json:"name,omitempty"`
-	IsPublic  bool         `json:"isPublic,omitempty"`
-	IsPrivate bool         `json:"isPrivate,omitempty"`
-	Encap     string       `json:"encap,omitempty"`
-	Subnet    string       `json:"subnet,omitempty"`
-	Labels    []string     `json:"labels,omitempty"`
-	Links     NetworkLinks `json:"links,omitempty"`
+	Key         string       `json:"key,omitempty"`
+	Encap       string       `json:"encap,omitempty"`
+	PktTag      int64        `json:"pktTag,omitempty"`
+	Subnet      string       `json:"subnet,omitempty"`
+	Labels      []string     `json:"labels,omitempty"`
+	NetworkName string       `json:"networkName,omitempty"`
+	TenantName  string       `json:"tenantName,omitempty"`
+	IsPublic    bool         `json:"isPublic,omitempty"`
+	IsPrivate   bool         `json:"isPrivate,omitempty"`
+	Links       NetworkLinks `json:"links,omitempty"`
 }
 
 type NetworkLinks struct {
@@ -32,9 +35,9 @@ type NetworkLinks struct {
 }
 
 type Tenant struct {
-	Key      string         `json:"key,omitempty"`
-	Name     string         `json:"name,omitempty"`
-	LinkSets TenantLinkSets `json:"link-sets,omitempty"`
+	Key        string         `json:"key,omitempty"`
+	TenantName string         `json:"tenantName,omitempty"`
+	LinkSets   TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
@@ -50,8 +53,10 @@ var collections Collections
 
 type Callbacks interface {
 	NetworkCreate(network *Network) error
+	NetworkUpdate(network, params *Network) error
 	NetworkDelete(network *Network) error
 	TenantCreate(tenant *Tenant) error
+	TenantUpdate(tenant, params *Tenant) error
 	TenantDelete(tenant *Tenant) error
 }
 
@@ -204,14 +209,32 @@ func httpDeleteNetwork(w http.ResponseWriter, r *http.Request, vars map[string]s
 
 // Create a network object
 func CreateNetwork(obj *Network) error {
-	// save it in cache
-	collections.networks[obj.Key] = obj
-
-	// Perform callback
-	err := objCallbackHandler.NetworkCreate(obj)
+	// Validate parameters
+	err := ValidateNetwork(obj)
 	if err != nil {
-		log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
+		log.Errorf("ValidateNetwork retruned error for: %+v. Err: %v", obj, err)
 		return err
+	}
+
+	// Check if object already exists
+	if collections.networks[obj.Key] != nil {
+		// Perform Update callback
+		err = objCallbackHandler.NetworkUpdate(collections.networks[obj.Key], obj)
+		if err != nil {
+			log.Errorf("NetworkUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.networks[obj.Key] = obj
+
+		// Perform Create callback
+		err = objCallbackHandler.NetworkCreate(obj)
+		if err != nil {
+			log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.networks, obj.Key)
+			return err
+		}
 	}
 
 	// Write it to modeldb
@@ -242,9 +265,6 @@ func DeleteNetwork(key string) error {
 		log.Errorf("network %s not found", key)
 		return errors.New("network not found")
 	}
-
-	// set the key
-	obj.Key = key
 
 	// Perform callback
 	err := objCallbackHandler.NetworkDelete(obj)
@@ -317,6 +337,49 @@ func restoreNetwork() error {
 
 		// add it to the collection
 		collections.networks[network.Key] = &network
+	}
+
+	return nil
+}
+
+// Validate a network object
+func ValidateNetwork(obj *Network) error {
+	// Validate key is correct
+	keyStr := obj.TenantName + ":" + obj.NetworkName
+	if obj.Key != keyStr {
+		log.Errorf("Expecting Network Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
+
+	if len(obj.Encap) > 32 {
+		return errors.New("encap string too long")
+	}
+
+	if obj.IsPrivate == false {
+		obj.IsPrivate = true
+	}
+
+	if obj.IsPublic == false {
+		obj.IsPublic = false
+	}
+
+	if obj.PktTag == 0 {
+		obj.PktTag = 1
+	}
+
+	if obj.PktTag < 1 {
+		return errors.New("pktTag Value Out of bound")
+	}
+
+	if obj.PktTag > 4094 {
+		return errors.New("pktTag Value Out of bound")
+	}
+
+	fieldMatch := regexp.MustCompile("^([0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?/[0-9]{1,2}?)$")
+	if fieldMatch.MatchString(obj.Subnet) == false {
+		return errors.New("subnet string invalid format")
 	}
 
 	return nil
@@ -398,14 +461,32 @@ func httpDeleteTenant(w http.ResponseWriter, r *http.Request, vars map[string]st
 
 // Create a tenant object
 func CreateTenant(obj *Tenant) error {
-	// save it in cache
-	collections.tenants[obj.Key] = obj
-
-	// Perform callback
-	err := objCallbackHandler.TenantCreate(obj)
+	// Validate parameters
+	err := ValidateTenant(obj)
 	if err != nil {
-		log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
+		log.Errorf("ValidateTenant retruned error for: %+v. Err: %v", obj, err)
 		return err
+	}
+
+	// Check if object already exists
+	if collections.tenants[obj.Key] != nil {
+		// Perform Update callback
+		err = objCallbackHandler.TenantUpdate(collections.tenants[obj.Key], obj)
+		if err != nil {
+			log.Errorf("TenantUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.tenants[obj.Key] = obj
+
+		// Perform Create callback
+		err = objCallbackHandler.TenantCreate(obj)
+		if err != nil {
+			log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.tenants, obj.Key)
+			return err
+		}
 	}
 
 	// Write it to modeldb
@@ -436,9 +517,6 @@ func DeleteTenant(key string) error {
 		log.Errorf("tenant %s not found", key)
 		return errors.New("tenant not found")
 	}
-
-	// set the key
-	obj.Key = key
 
 	// Perform callback
 	err := objCallbackHandler.TenantDelete(obj)
@@ -512,6 +590,20 @@ func restoreTenant() error {
 		// add it to the collection
 		collections.tenants[tenant.Key] = &tenant
 	}
+
+	return nil
+}
+
+// Validate a tenant object
+func ValidateTenant(obj *Tenant) error {
+	// Validate key is correct
+	keyStr := obj.TenantName
+	if obj.Key != keyStr {
+		log.Errorf("Expecting Tenant Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
 
 	return nil
 }

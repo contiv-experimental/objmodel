@@ -4,9 +4,9 @@
 		{
 			"name": "tenant",
 			"type": "object",
-			"key": "string",
+			"key": ["tenantName"],
 			"properties": {
-				"name": {
+				"tenantName": {
 					"type": "string",
 					"description": "Tenant Name"
 				}
