@@ -49,19 +49,19 @@ type EndpointGroupLinkSets struct {
 }
 
 type EndpointGroupLinks struct {
-	Tenant  modeldb.Link `json:"tenant,omitempty"`
 	Network modeldb.Link `json:"network,omitempty"`
+	Tenant  modeldb.Link `json:"tenant,omitempty"`
 }
 
 type Network struct {
 	Key         string          `json:"key,omitempty"`
-	TenantName  string          `json:"tenantName,omitempty"`
 	IsPublic    bool            `json:"isPublic,omitempty"`
 	IsPrivate   bool            `json:"isPrivate,omitempty"`
 	Encap       string          `json:"encap,omitempty"`
 	Subnet      string          `json:"subnet,omitempty"`
 	DefaultGw   string          `json:"defaultGw,omitempty"`
 	NetworkName string          `json:"networkName,omitempty"`
+	TenantName  string          `json:"tenantName,omitempty"`
 	LinkSets    NetworkLinkSets `json:"link-sets,omitempty"`
 	Links       NetworkLinks    `json:"links,omitempty"`
 }
@@ -79,33 +79,51 @@ type Policy struct {
 	Key        string         `json:"key,omitempty"`
 	PolicyName string         `json:"policyName,omitempty"`
 	TenantName string         `json:"tenantName,omitempty"`
-	Rules      []string       `json:"rules,omitempty"`
 	LinkSets   PolicyLinkSets `json:"link-sets,omitempty"`
 	Links      PolicyLinks    `json:"links,omitempty"`
 }
 
 type PolicyLinkSets struct {
 	EndpointGroups map[string]modeldb.Link `json:"endpointGroups,omitempty"`
+	Rules          map[string]modeldb.Link `json:"rules,omitempty"`
 }
 
 type PolicyLinks struct {
 	Tenant modeldb.Link `json:"tenant,omitempty"`
 }
 
+type Rule struct {
+	Key           string       `json:"key,omitempty"`
+	Network       string       `json:"network,omitempty"`
+	Protocol      string       `json:"protocol,omitempty"`
+	EndpointGroup string       `json:"endpointGroup,omitempty"`
+	PolicyName    string       `json:"policyName,omitempty"`
+	TenantName    string       `json:"tenantName,omitempty"`
+	Direction     string       `json:"direction,omitempty"`
+	IpAddress     string       `json:"ipAddress,omitempty"`
+	Port          int64        `json:"port,omitempty"`
+	RuleName      string       `json:"ruleName,omitempty"`
+	LinkSets      RuleLinkSets `json:"link-sets,omitempty"`
+}
+
+type RuleLinkSets struct {
+	Policies map[string]modeldb.Link `json:"policies,omitempty"`
+}
+
 type Service struct {
 	Key            string          `json:"key,omitempty"`
-	Command        string          `json:"command,omitempty"`
 	Environment    []string        `json:"environment,omitempty"`
 	EndpointGroups []string        `json:"endpointGroups,omitempty"`
 	Networks       []string        `json:"networks,omitempty"`
 	VolumeProfile  string          `json:"volumeProfile,omitempty"`
 	TenantName     string          `json:"tenantName,omitempty"`
 	Memory         string          `json:"memory,omitempty"`
-	ImageName      string          `json:"imageName,omitempty"`
+	Command        string          `json:"command,omitempty"`
 	Cpu            string          `json:"cpu,omitempty"`
 	Scale          int64           `json:"scale,omitempty"`
 	ServiceName    string          `json:"serviceName,omitempty"`
 	AppName        string          `json:"appName,omitempty"`
+	ImageName      string          `json:"imageName,omitempty"`
 	LinkSets       ServiceLinkSets `json:"link-sets,omitempty"`
 	Links          ServiceLinks    `json:"links,omitempty"`
 }
@@ -123,11 +141,11 @@ type ServiceLinks struct {
 
 type ServiceInstance struct {
 	Key         string                  `json:"key,omitempty"`
-	Volumes     []string                `json:"volumes,omitempty"`
 	InstanceID  string                  `json:"instanceId,omitempty"`
 	TenantName  string                  `json:"tenantName,omitempty"`
 	AppName     string                  `json:"appName,omitempty"`
 	ServiceName string                  `json:"serviceName,omitempty"`
+	Volumes     []string                `json:"volumes,omitempty"`
 	LinkSets    ServiceInstanceLinkSets `json:"link-sets,omitempty"`
 	Links       ServiceInstanceLinks    `json:"links,omitempty"`
 }
@@ -161,12 +179,12 @@ type TenantLinkSets struct {
 
 type Volume struct {
 	Key           string         `json:"key,omitempty"`
-	MountPoint    string         `json:"mountPoint,omitempty"`
-	VolumeName    string         `json:"volumeName,omitempty"`
-	TenantName    string         `json:"tenantName,omitempty"`
 	DatastoreType string         `json:"datastoreType,omitempty"`
 	PoolName      string         `json:"poolName,omitempty"`
 	Size          string         `json:"size,omitempty"`
+	MountPoint    string         `json:"mountPoint,omitempty"`
+	VolumeName    string         `json:"volumeName,omitempty"`
+	TenantName    string         `json:"tenantName,omitempty"`
 	LinkSets      VolumeLinkSets `json:"link-sets,omitempty"`
 	Links         VolumeLinks    `json:"links,omitempty"`
 }
@@ -181,12 +199,12 @@ type VolumeLinks struct {
 
 type VolumeProfile struct {
 	Key               string                `json:"key,omitempty"`
+	MountPoint        string                `json:"mountPoint,omitempty"`
 	VolumeProfileName string                `json:"volumeProfileName,omitempty"`
 	TenantName        string                `json:"tenantName,omitempty"`
 	DatastoreType     string                `json:"datastoreType,omitempty"`
 	PoolName          string                `json:"poolName,omitempty"`
 	Size              string                `json:"size,omitempty"`
-	MountPoint        string                `json:"mountPoint,omitempty"`
 	LinkSets          VolumeProfileLinkSets `json:"link-sets,omitempty"`
 	Links             VolumeProfileLinks    `json:"links,omitempty"`
 }
@@ -204,6 +222,7 @@ type Collections struct {
 	endpointGroups   map[string]*EndpointGroup
 	networks         map[string]*Network
 	policys          map[string]*Policy
+	rules            map[string]*Rule
 	services         map[string]*Service
 	serviceInstances map[string]*ServiceInstance
 	tenants          map[string]*Tenant
@@ -226,6 +245,9 @@ type Callbacks interface {
 	PolicyCreate(policy *Policy) error
 	PolicyUpdate(policy, params *Policy) error
 	PolicyDelete(policy *Policy) error
+	RuleCreate(rule *Rule) error
+	RuleUpdate(rule, params *Rule) error
+	RuleDelete(rule *Rule) error
 	ServiceCreate(service *Service) error
 	ServiceUpdate(service, params *Service) error
 	ServiceDelete(service *Service) error
@@ -252,6 +274,7 @@ func Init(handler Callbacks) {
 	collections.endpointGroups = make(map[string]*EndpointGroup)
 	collections.networks = make(map[string]*Network)
 	collections.policys = make(map[string]*Policy)
+	collections.rules = make(map[string]*Rule)
 	collections.services = make(map[string]*Service)
 	collections.serviceInstances = make(map[string]*ServiceInstance)
 	collections.tenants = make(map[string]*Tenant)
@@ -262,6 +285,7 @@ func Init(handler Callbacks) {
 	restoreEndpointGroup()
 	restoreNetwork()
 	restorePolicy()
+	restoreRule()
 	restoreService()
 	restoreServiceInstance()
 	restoreTenant()
@@ -347,6 +371,16 @@ func AddRoutes(router *mux.Router) {
 	router.Path(route).Methods("POST").HandlerFunc(makeHttpHandler(httpCreatePolicy))
 	router.Path(route).Methods("PUT").HandlerFunc(makeHttpHandler(httpCreatePolicy))
 	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDeletePolicy))
+
+	// Register rule
+	route = "/api/rules/{key}/"
+	listRoute = "/api/rules/"
+	log.Infof("Registering %s", route)
+	router.Path(listRoute).Methods("GET").HandlerFunc(makeHttpHandler(httpListRules))
+	router.Path(route).Methods("GET").HandlerFunc(makeHttpHandler(httpGetRule))
+	router.Path(route).Methods("POST").HandlerFunc(makeHttpHandler(httpCreateRule))
+	router.Path(route).Methods("PUT").HandlerFunc(makeHttpHandler(httpCreateRule))
+	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDeleteRule))
 
 	// Register service
 	route = "/api/services/{key}/"
@@ -1311,6 +1345,263 @@ func ValidatePolicy(obj *Policy) error {
 	}
 
 	// Validate each field
+
+	return nil
+}
+
+// LIST REST call
+func httpListRules(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpListRules: %+v", vars)
+
+	list := make([]*Rule, 0)
+	for _, obj := range collections.rules {
+		list = append(list, obj)
+	}
+
+	// Return the list
+	return list, nil
+}
+
+// GET REST call
+func httpGetRule(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpGetRule: %+v", vars)
+
+	key := vars["key"]
+
+	obj := collections.rules[key]
+	if obj == nil {
+		log.Errorf("rule %s not found", key)
+		return nil, errors.New("rule not found")
+	}
+
+	// Return the obj
+	return obj, nil
+}
+
+// CREATE REST call
+func httpCreateRule(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpGetRule: %+v", vars)
+
+	var obj Rule
+	key := vars["key"]
+
+	// Get object from the request
+	err := json.NewDecoder(r.Body).Decode(&obj)
+	if err != nil {
+		log.Errorf("Error decoding rule create request. Err %v", err)
+		return nil, err
+	}
+
+	// set the key
+	obj.Key = key
+
+	// Create the object
+	err = CreateRule(&obj)
+	if err != nil {
+		log.Errorf("CreateRule error for: %+v. Err: %v", obj, err)
+		return nil, err
+	}
+
+	// Return the obj
+	return obj, nil
+}
+
+// DELETE rest call
+func httpDeleteRule(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpDeleteRule: %+v", vars)
+
+	key := vars["key"]
+
+	// Delete the object
+	err := DeleteRule(key)
+	if err != nil {
+		log.Errorf("DeleteRule error for: %s. Err: %v", key, err)
+		return nil, err
+	}
+
+	// Return the obj
+	return key, nil
+}
+
+// Create a rule object
+func CreateRule(obj *Rule) error {
+	// Validate parameters
+	err := ValidateRule(obj)
+	if err != nil {
+		log.Errorf("ValidateRule retruned error for: %+v. Err: %v", obj, err)
+		return err
+	}
+
+	// Check if object already exists
+	if collections.rules[obj.Key] != nil {
+		// Perform Update callback
+		err = objCallbackHandler.RuleUpdate(collections.rules[obj.Key], obj)
+		if err != nil {
+			log.Errorf("RuleUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.rules[obj.Key] = obj
+
+		// Perform Create callback
+		err = objCallbackHandler.RuleCreate(obj)
+		if err != nil {
+			log.Errorf("RuleCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.rules, obj.Key)
+			return err
+		}
+	}
+
+	// Write it to modeldb
+	err = obj.Write()
+	if err != nil {
+		log.Errorf("Error saving rule %s to db. Err: %v", obj.Key, err)
+		return err
+	}
+
+	return nil
+}
+
+// Return a pointer to rule from collection
+func FindRule(key string) *Rule {
+	obj := collections.rules[key]
+	if obj == nil {
+		log.Errorf("rule %s not found", key)
+		return nil
+	}
+
+	return obj
+}
+
+// Delete a rule object
+func DeleteRule(key string) error {
+	obj := collections.rules[key]
+	if obj == nil {
+		log.Errorf("rule %s not found", key)
+		return errors.New("rule not found")
+	}
+
+	// Perform callback
+	err := objCallbackHandler.RuleDelete(obj)
+	if err != nil {
+		log.Errorf("RuleDelete retruned error for: %+v. Err: %v", obj, err)
+		return err
+	}
+
+	// delete it from modeldb
+	err = obj.Delete()
+	if err != nil {
+		log.Errorf("Error deleting rule %s. Err: %v", obj.Key, err)
+	}
+
+	// delete it from cache
+	delete(collections.rules, key)
+
+	return nil
+}
+
+func (self *Rule) GetType() string {
+	return "rule"
+}
+
+func (self *Rule) GetKey() string {
+	return self.Key
+}
+
+func (self *Rule) Read() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to read rule object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.ReadObj("rule", self.Key, self)
+}
+
+func (self *Rule) Write() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to Write rule object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.WriteObj("rule", self.Key, self)
+}
+
+func (self *Rule) Delete() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to Delete rule object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.DeleteObj("rule", self.Key)
+}
+
+func restoreRule() error {
+	strList, err := modeldb.ReadAllObj("rule")
+	if err != nil {
+		log.Errorf("Error reading rule list. Err: %v", err)
+	}
+
+	for _, objStr := range strList {
+		// Parse the json model
+		var rule Rule
+		err = json.Unmarshal([]byte(objStr), &rule)
+		if err != nil {
+			log.Errorf("Error parsing object %s, Err %v", objStr, err)
+			return err
+		}
+
+		// add it to the collection
+		collections.rules[rule.Key] = &rule
+	}
+
+	return nil
+}
+
+// Validate a rule object
+func ValidateRule(obj *Rule) error {
+	// Validate key is correct
+	keyStr := obj.TenantName + ":" + obj.PolicyName + ":" + obj.RuleName
+	if obj.Key != keyStr {
+		log.Errorf("Expecting Rule Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
+
+	directionMatch := regexp.MustCompile("^(in|out)$")
+	if directionMatch.MatchString(obj.Direction) == false {
+		return errors.New("direction string invalid format")
+	}
+
+	if len(obj.EndpointGroup) > 64 {
+		return errors.New("endpointGroup string too long")
+	}
+
+	if len(obj.Network) > 64 {
+		return errors.New("network string too long")
+	}
+
+	if len(obj.PolicyName) > 64 {
+		return errors.New("policyName string too long")
+	}
+
+	if obj.Port > 65535 {
+		return errors.New("port Value Out of bound")
+	}
+
+	protocolMatch := regexp.MustCompile("^(tcp|udp|icmp|[0-9]{1,3}?)$")
+	if protocolMatch.MatchString(obj.Protocol) == false {
+		return errors.New("protocol string invalid format")
+	}
+
+	if len(obj.RuleName) > 64 {
+		return errors.New("ruleName string too long")
+	}
+
+	if len(obj.TenantName) > 64 {
+		return errors.New("tenantName string too long")
+	}
 
 	return nil
 }

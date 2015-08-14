@@ -13,15 +13,15 @@
 				"tenantName": {
 					"type": "string",
 					"description": "Tenant Name"
-				},
-				"rules": {
-					"type": "array",
-					"items": "string"
 				}
 			},
 			"link-sets": {
 				"endpointGroups": {
 					"ref": "endpointGroup"
+				},
+				"rules": {
+					"ref": "rule"
+
 				}
 			},
 			"links": {
