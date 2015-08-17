@@ -67,19 +67,25 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	goStr = goStr + fmt.Sprintf("var collections Collections\n\n")
 
 	// Generate callback interface
-	goStr = goStr + fmt.Sprintf("type Callbacks interface {\n")
 	for _, obj := range s.Objects {
+		goStr = goStr + fmt.Sprintf("type %sCallbacks interface {\n", initialCap(obj.Name))
 		goStr = goStr + fmt.Sprintf("	%sCreate(%s *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
 		goStr = goStr + fmt.Sprintf("	%sUpdate(%s, params *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
 		goStr = goStr + fmt.Sprintf("	%sDelete(%s *%s) error\n", initialCap(obj.Name), obj.Name, initialCap(obj.Name))
+		goStr = goStr + fmt.Sprintf("}\n\n")
+	}
+
+	// generate callback handler
+	goStr = goStr + fmt.Sprintf("type CallbackHandlers struct {\n")
+	for _, obj := range s.Objects {
+		goStr = goStr + fmt.Sprintf("	%sCb %sCallbacks\n", initialCap(obj.Name), initialCap(obj.Name))
 	}
 	goStr = goStr + fmt.Sprintf("}\n\n")
 
-	goStr = goStr + fmt.Sprintf("var objCallbackHandler Callbacks\n\n")
+	goStr = goStr + fmt.Sprintf("var objCallbackHandler CallbackHandlers\n\n")
 
 	// Generate an Init function
-	goStr = goStr + fmt.Sprintf("\nfunc Init(handler Callbacks) {\n")
-	goStr = goStr + fmt.Sprintf("objCallbackHandler = handler\n\n")
+	goStr = goStr + fmt.Sprintf("\nfunc Init() {\n")
 	for _, obj := range s.Objects {
 		goStr = goStr + fmt.Sprintf("	collections.%ss = make(map[string]*%s)\n", obj.Name, initialCap(obj.Name))
 	}
@@ -90,6 +96,12 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 
 	goStr = goStr + fmt.Sprintf("}\n\n")
 
+	// Generate callback register functions
+	for _, obj := range s.Objects {
+		goStr = goStr + fmt.Sprintf("func Register%sCallbacks(handler %sCallbacks) {\n", initialCap(obj.Name), initialCap(obj.Name))
+		goStr = goStr + fmt.Sprintf("	objCallbackHandler.%sCb = handler\n", initialCap(obj.Name))
+		goStr = goStr + fmt.Sprintf("}\n\n")
+	}
 	return goStr, nil
 }
 
@@ -296,10 +308,16 @@ func Create{{initialCap .}}(obj *{{initialCap .}}) error {
 		return err
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.{{initialCap .}}Cb == nil {
+		log.Errorf("No callback registered for {{.}} object")
+		return errors.New("Invalid object type")
+	}
+
 	// Check if object already exists
 	if collections.{{.}}s[obj.Key] != nil {
 		// Perform Update callback
-		err = objCallbackHandler.{{initialCap .}}Update(collections.{{.}}s[obj.Key], obj)
+		err = objCallbackHandler.{{initialCap .}}Cb.{{initialCap .}}Update(collections.{{.}}s[obj.Key], obj)
 		if err != nil {
 			log.Errorf("{{initialCap .}}Update retruned error for: %+v. Err: %v", obj, err)
 			return err
@@ -309,7 +327,7 @@ func Create{{initialCap .}}(obj *{{initialCap .}}) error {
 		collections.{{.}}s[obj.Key] = obj
 
 		// Perform Create callback
-		err = objCallbackHandler.{{initialCap .}}Create(obj)
+		err = objCallbackHandler.{{initialCap .}}Cb.{{initialCap .}}Create(obj)
 		if err != nil {
 			log.Errorf("{{initialCap .}}Create retruned error for: %+v. Err: %v", obj, err)
 			delete(collections.{{.}}s, obj.Key)
@@ -346,8 +364,14 @@ func Delete{{initialCap .}}(key string) error {
 		return errors.New("{{.}} not found")
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.{{initialCap .}}Cb == nil {
+		log.Errorf("No callback registered for {{.}} object")
+		return errors.New("Invalid object type")
+	}
+
 	// Perform callback
-	err := objCallbackHandler.{{initialCap .}}Delete(obj)
+	err := objCallbackHandler.{{initialCap .}}Cb.{{initialCap .}}Delete(obj)
 	if err != nil {
 		log.Errorf("{{initialCap .}}Delete retruned error for: %+v. Err: %v", obj, err)
 		return err

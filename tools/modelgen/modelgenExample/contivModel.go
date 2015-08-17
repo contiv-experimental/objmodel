@@ -19,14 +19,14 @@ type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]st
 
 type Network struct {
 	Key         string       `json:"key,omitempty"`
+	TenantName  string       `json:"tenantName,omitempty"`
+	IsPublic    bool         `json:"isPublic,omitempty"`
+	IsPrivate   bool         `json:"isPrivate,omitempty"`
 	Encap       string       `json:"encap,omitempty"`
 	PktTag      int64        `json:"pktTag,omitempty"`
 	Subnet      string       `json:"subnet,omitempty"`
 	Labels      []string     `json:"labels,omitempty"`
 	NetworkName string       `json:"networkName,omitempty"`
-	TenantName  string       `json:"tenantName,omitempty"`
-	IsPublic    bool         `json:"isPublic,omitempty"`
-	IsPrivate   bool         `json:"isPrivate,omitempty"`
 	Links       NetworkLinks `json:"links,omitempty"`
 }
 
@@ -51,25 +51,39 @@ type Collections struct {
 
 var collections Collections
 
-type Callbacks interface {
+type NetworkCallbacks interface {
 	NetworkCreate(network *Network) error
 	NetworkUpdate(network, params *Network) error
 	NetworkDelete(network *Network) error
+}
+
+type TenantCallbacks interface {
 	TenantCreate(tenant *Tenant) error
 	TenantUpdate(tenant, params *Tenant) error
 	TenantDelete(tenant *Tenant) error
 }
 
-var objCallbackHandler Callbacks
+type CallbackHandlers struct {
+	NetworkCb NetworkCallbacks
+	TenantCb  TenantCallbacks
+}
 
-func Init(handler Callbacks) {
-	objCallbackHandler = handler
+var objCallbackHandler CallbackHandlers
 
+func Init() {
 	collections.networks = make(map[string]*Network)
 	collections.tenants = make(map[string]*Tenant)
 
 	restoreNetwork()
 	restoreTenant()
+}
+
+func RegisterNetworkCallbacks(handler NetworkCallbacks) {
+	objCallbackHandler.NetworkCb = handler
+}
+
+func RegisterTenantCallbacks(handler TenantCallbacks) {
+	objCallbackHandler.TenantCb = handler
 }
 
 // Simple Wrapper for http handlers
@@ -216,10 +230,16 @@ func CreateNetwork(obj *Network) error {
 		return err
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.NetworkCb == nil {
+		log.Errorf("No callback registered for network object")
+		return errors.New("Invalid object type")
+	}
+
 	// Check if object already exists
 	if collections.networks[obj.Key] != nil {
 		// Perform Update callback
-		err = objCallbackHandler.NetworkUpdate(collections.networks[obj.Key], obj)
+		err = objCallbackHandler.NetworkCb.NetworkUpdate(collections.networks[obj.Key], obj)
 		if err != nil {
 			log.Errorf("NetworkUpdate retruned error for: %+v. Err: %v", obj, err)
 			return err
@@ -229,7 +249,7 @@ func CreateNetwork(obj *Network) error {
 		collections.networks[obj.Key] = obj
 
 		// Perform Create callback
-		err = objCallbackHandler.NetworkCreate(obj)
+		err = objCallbackHandler.NetworkCb.NetworkCreate(obj)
 		if err != nil {
 			log.Errorf("NetworkCreate retruned error for: %+v. Err: %v", obj, err)
 			delete(collections.networks, obj.Key)
@@ -266,8 +286,14 @@ func DeleteNetwork(key string) error {
 		return errors.New("network not found")
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.NetworkCb == nil {
+		log.Errorf("No callback registered for network object")
+		return errors.New("Invalid object type")
+	}
+
 	// Perform callback
-	err := objCallbackHandler.NetworkDelete(obj)
+	err := objCallbackHandler.NetworkCb.NetworkDelete(obj)
 	if err != nil {
 		log.Errorf("NetworkDelete retruned error for: %+v. Err: %v", obj, err)
 		return err
@@ -377,8 +403,8 @@ func ValidateNetwork(obj *Network) error {
 		return errors.New("pktTag Value Out of bound")
 	}
 
-	fieldMatch := regexp.MustCompile("^([0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?/[0-9]{1,2}?)$")
-	if fieldMatch.MatchString(obj.Subnet) == false {
+	subnetMatch := regexp.MustCompile("^([0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?/[0-9]{1,2}?)$")
+	if subnetMatch.MatchString(obj.Subnet) == false {
 		return errors.New("subnet string invalid format")
 	}
 
@@ -468,10 +494,16 @@ func CreateTenant(obj *Tenant) error {
 		return err
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.TenantCb == nil {
+		log.Errorf("No callback registered for tenant object")
+		return errors.New("Invalid object type")
+	}
+
 	// Check if object already exists
 	if collections.tenants[obj.Key] != nil {
 		// Perform Update callback
-		err = objCallbackHandler.TenantUpdate(collections.tenants[obj.Key], obj)
+		err = objCallbackHandler.TenantCb.TenantUpdate(collections.tenants[obj.Key], obj)
 		if err != nil {
 			log.Errorf("TenantUpdate retruned error for: %+v. Err: %v", obj, err)
 			return err
@@ -481,7 +513,7 @@ func CreateTenant(obj *Tenant) error {
 		collections.tenants[obj.Key] = obj
 
 		// Perform Create callback
-		err = objCallbackHandler.TenantCreate(obj)
+		err = objCallbackHandler.TenantCb.TenantCreate(obj)
 		if err != nil {
 			log.Errorf("TenantCreate retruned error for: %+v. Err: %v", obj, err)
 			delete(collections.tenants, obj.Key)
@@ -518,8 +550,14 @@ func DeleteTenant(key string) error {
 		return errors.New("tenant not found")
 	}
 
+	// Check if we handle this object
+	if objCallbackHandler.TenantCb == nil {
+		log.Errorf("No callback registered for tenant object")
+		return errors.New("Invalid object type")
+	}
+
 	// Perform callback
-	err := objCallbackHandler.TenantDelete(obj)
+	err := objCallbackHandler.TenantCb.TenantDelete(obj)
 	if err != nil {
 		log.Errorf("TenantDelete retruned error for: %+v. Err: %v", obj, err)
 		return err

@@ -52,9 +52,9 @@ func TestParseJsonSchema(t *testing.T) {
 	fmt.Fprintln(gotFile, goStr)
 
 	// Read the expected output file
-	b, err := ioutil.ReadFile("./test_exp.txt")
+	b, err := ioutil.ReadFile("./test_expected.txt")
 	if err != nil {
-		t.Fatalf("Could not read expected output file ./test_exp.txt")
+		t.Fatalf("Could not read expected output file ./test_expected.txt")
 	}
 
 	// Make sure every line in expected output is present in the gotten output

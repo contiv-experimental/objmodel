@@ -40,7 +40,19 @@ func NewApiController(router *mux.Router) *ApiController {
 	ctrler.router = router
 
 	// initialize the model objects
-	contivModel.Init(ctrler)
+	contivModel.Init()
+
+	// Register Callbacks
+	contivModel.RegisterAppCallbacks(ctrler)
+	contivModel.RegisterEndpointGroupCallbacks(ctrler)
+	contivModel.RegisterNetworkCallbacks(ctrler)
+	contivModel.RegisterPolicyCallbacks(ctrler)
+	contivModel.RegisterRuleCallbacks(ctrler)
+	contivModel.RegisterServiceCallbacks(ctrler)
+	contivModel.RegisterServiceInstanceCallbacks(ctrler)
+	contivModel.RegisterTenantCallbacks(ctrler)
+	contivModel.RegisterVolumeCallbacks(ctrler)
+	contivModel.RegisterVolumeProfileCallbacks(ctrler)
 
 	// Register routes
 	contivModel.AddRoutes(router)

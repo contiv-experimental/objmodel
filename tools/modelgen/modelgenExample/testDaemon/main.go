@@ -47,7 +47,11 @@ var handler ObjHandler
 
 func main() {
 	// Initialize the models
-	contivModel.Init(&handler)
+	contivModel.Init()
+
+	// Register Callbacks
+	contivModel.RegisterNetworkCallbacks(&handler)
+	contivModel.RegisterTenantCallbacks(&handler)
 
 	// Create a router
 	router := mux.NewRouter()
