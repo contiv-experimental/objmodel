@@ -1,0 +1,56 @@
+// Validate a {{.Name}} object
+func Validate{{initialCap .Name}}(obj *{{initialCap .Name}}) error {
+	// Validate key is correct
+	keyStr := {{range $index, $element := .Key}}{{if eq 0 $index }}obj.{{initialCap .}} {{else}}+ ":" + obj.{{initialCap .}} {{end}}{{end}}
+	if obj.Key != keyStr {
+		log.Errorf("Expecting {{initialCap .Name}} Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
+	{{range $element := .Properties}}{{if eq $element.Type "int"}}{{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == 0 {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Min 0.0}}
+	if obj.{{initialCap $element.Name}} < {{$element.Min}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{if ne $element.Max 0.0}}
+	if obj.{{initialCap $element.Name}} > {{$element.Max}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{else if eq $element.Type "number"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == 0 {
+		obj.{{$element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Min 0.0}}
+	if obj.{{initialCap $element.Name}} < {{$element.Min}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{if ne $element.Max 0.0}}
+	if obj.{{initialCap $element.Name}} > {{$element.Max}} {
+		return errors.New("{{$element.Name}} Value Out of bound")
+	}
+{{end}} {{else if eq $element.Type "bool"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == false {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{else if eq $element.Type "string"}} {{if ne $element.Default ""}}
+	if obj.{{initialCap $element.Name}} == "" {
+		obj.{{initialCap $element.Name}} = {{$element.Default}}
+	}
+{{end}} {{if ne $element.Length 0}}
+	if len(obj.{{initialCap $element.Name}}) > {{$element.Length}} {
+		return errors.New("{{$element.Name}} string too long")
+	}
+{{end}} {{if ne $element.Format ""}}
+	{{$element.Name}}Match := regexp.MustCompile("{{$element.Format}}")
+	if {{$element.Name}}Match.MatchString(obj.{{initialCap $element.Name}}) == false {
+		return errors.New("{{$element.Name}} string invalid format")
+	}
+{{end}} {{end}} {{end}}
+
+	return nil
+}
+
