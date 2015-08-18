@@ -82,6 +82,9 @@ func main() {
 	outPath := "./"
 	if *output != "" {
 		outPath = *output
+		if err := os.MkdirAll(outPath, 0755); err != nil {
+			log.Fatalf("Error creating output directory: %v", err)
+		}
 	}
 
 	// Write the Go file output
