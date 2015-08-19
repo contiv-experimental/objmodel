@@ -155,24 +155,6 @@ func (obj *Object) GenerateValidate() (string, error) {
 	return goStr, nil
 }
 
-func xlatePropType(propType string) string {
-	var goStr string
-	switch propType {
-	case "string":
-		goStr = goStr + fmt.Sprintf("string")
-	case "number":
-		goStr = goStr + fmt.Sprintf("float64")
-	case "int":
-		goStr = goStr + fmt.Sprintf("int64")
-	case "bool":
-		goStr = goStr + fmt.Sprintf("bool")
-	default:
-		return ""
-	}
-
-	return goStr
-}
-
 func (prop *Property) GenerateGoStructs() (string, error) {
 	var goStr string
 
@@ -185,10 +167,10 @@ func (prop *Property) GenerateGoStructs() (string, error) {
 	case "int":
 		fallthrough
 	case "bool":
-		subStr := xlatePropType(prop.Type)
+		subStr := texthelpers.TranslatePropertyType(prop.Type)
 		goStr = goStr + fmt.Sprintf("%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
 	case "array":
-		subStr := xlatePropType(prop.Items)
+		subStr := texthelpers.TranslatePropertyType(prop.Items)
 		if subStr == "" {
 			return "", errors.New("Unknown array items")
 		}
