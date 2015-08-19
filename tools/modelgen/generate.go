@@ -85,43 +85,7 @@ func (s *Schema) GenerateGoHdrs() (string, error) {
 
 func (s *Schema) GenerateGoFuncs() (string, error) {
 	// Output the functions and routes
-	goStr, err := generators.RunTemplate("routeFunc", nil)
-	if err != nil {
-		return "", err
-	}
-
-	// add a path for each object
-	for _, obj := range s.Objects {
-		// Create a template, add the function map, and parse the text.
-		str, err := generators.RunTemplate("routeTmpl", obj.Name)
-		if err != nil {
-			return "", err
-		}
-
-		goStr += str
-	}
-
-	goStr += fmt.Sprintf("\n}\n")
-
-	// Generate REST handlers for each object
-	for _, obj := range s.Objects {
-		str, err := generators.RunTemplate("handlerFuncs", obj.Name)
-		if err != nil {
-			return "", err
-		}
-
-		goStr += str
-
-		//  Generate object validators
-		objStr, err := obj.GenerateValidate()
-		if err != nil {
-			return "", err
-		}
-
-		goStr += objStr
-	}
-
-	return goStr, nil
+	return generators.RunTemplate("routeFunc", s)
 }
 
 func (obj *Object) GenerateGoStructs() (string, error) {
