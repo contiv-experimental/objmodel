@@ -15,7 +15,7 @@ cat <<EOF
 "$(basename -s.tmpl $file)": \`
 EOF
 
-sed 's/`/\\`/g' $file
+sed 's/`/` + "`" + `/g' $file
 
 cat <<EOF
   \`,
