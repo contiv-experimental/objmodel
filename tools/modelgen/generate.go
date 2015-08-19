@@ -75,13 +75,6 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	goStr += buf.String()
 
 	// generate callback handler
-	goStr = goStr + fmt.Sprintf("type CallbackHandlers struct {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	%sCb %sCallbacks\n", texthelpers.InitialCap(obj.Name), texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("}\n\n")
-
-	goStr = goStr + fmt.Sprintf("var objCallbackHandler CallbackHandlers\n\n")
 
 	// Generate an Init function
 	goStr = goStr + fmt.Sprintf("\nfunc Init() {\n")

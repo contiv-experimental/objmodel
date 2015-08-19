@@ -5,3 +5,10 @@ type {{ initialCap .Name }}Callbacks interface {
   {{ initialCap .Name }}Delete({{ .Name }} *{{ initialCap .Name }}) error
 }
 {{ end }}
+
+type CallbackHandlers struct {
+  {{ range .Objects }} {{ initialCap .Name }}Cb {{ initialCap .Name }}Callbacks
+  {{ end }}
+}
+
+var objCallbackHandler CallbackHandlers
