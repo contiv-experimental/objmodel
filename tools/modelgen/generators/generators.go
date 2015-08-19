@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"bytes"
 	"text/template"
 
 	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
@@ -29,4 +30,15 @@ func ParseTemplates() error {
 
 func GetTemplate(templateName string) *template.Template {
 	return templateMap[templateName]
+}
+
+func RunTemplate(templateName string, obj interface{}) (string, error) {
+	buf := new(bytes.Buffer)
+
+	tmpl := GetTemplate(templateName)
+	if err := tmpl.Execute(buf, obj); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

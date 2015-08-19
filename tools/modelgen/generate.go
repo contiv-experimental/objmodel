@@ -28,7 +28,10 @@ import (
 // GenerateGo generates go code for the schema
 func (s *Schema) GenerateGo() (string, error) {
 	// Generate file headers
-	outStr := s.GenerateGoHdrs()
+	outStr, err := s.GenerateGoHdrs()
+	if err != nil {
+		return "", err
+	}
 
 	// Generate structs
 	structStr, err := s.GenerateGoStructs()
@@ -41,9 +44,12 @@ func (s *Schema) GenerateGo() (string, error) {
 	outStr = outStr + structStr
 
 	// Merge rest handler
-	outStr = outStr + s.GenerateGoFuncs()
+	str, err := s.GenerateGoFuncs()
+	if err != nil {
+		return "", err
+	}
 
-	return outStr, nil
+	return outStr + str, nil
 }
 
 // GenerateGoStructs generates go code from a schema
@@ -53,103 +59,69 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	//  Generate all object definitions
 	for _, obj := range s.Objects {
 		objStr, err := obj.GenerateGoStructs()
-		if err == nil {
-			goStr += objStr
+		if err != nil {
+			return "", err
 		}
+
+		goStr += objStr
 	}
 
-	buf := new(bytes.Buffer)
+	for _, name := range []string{"gostructs", "callbacks", "init", "register"} {
+		str, err := generators.RunTemplate(name, s)
+		if err != nil {
+			return "", err
+		}
 
-	tmpl := generators.GetTemplate("gostructs")
-	if err := tmpl.Execute(buf, s); err != nil {
-		return "", err
+		goStr += str
 	}
 
-	goStr += buf.String()
-
-	tmpl = generators.GetTemplate("callbacks")
-	if err := tmpl.Execute(buf, s); err != nil {
-		return "", err
-	}
-
-	goStr += buf.String()
-
-	tmpl = generators.GetTemplate("init")
-	if err := tmpl.Execute(buf, s); err != nil {
-		return "", err
-	}
-
-	goStr += buf.String()
-
-	tmpl = generators.GetTemplate("register")
-	if err := tmpl.Execute(buf, s); err != nil {
-		return "", err
-	}
-
-	return goStr + buf.String(), nil
+	return goStr, nil
 }
 
 // GenerateGoHdrs generates go file headers
-func (s *Schema) GenerateGoHdrs() string {
-	var buf bytes.Buffer
-
-	tmpl := generators.GetTemplate("hdr")
-	err := tmpl.Execute(&buf, s)
-	if err != nil {
-		log.Errorf("Error executing template. Err: %v", err)
-		return ""
-	}
-
-	return buf.String()
+func (s *Schema) GenerateGoHdrs() (string, error) {
+	return generators.RunTemplate("hdr", s)
 }
 
-func (s *Schema) GenerateGoFuncs() string {
-	var buf bytes.Buffer
-	var goStr string
-
+func (s *Schema) GenerateGoFuncs() (string, error) {
 	// Output the functions and routes
-	rfTmpl := generators.GetTemplate("routeFunc")
-	rfTmpl.Execute(&buf, "")
-	goStr = goStr + buf.String()
+	goStr, err := generators.RunTemplate("routeFunc", nil)
+	if err != nil {
+		return "", err
+	}
 
 	// add a path for each object
 	for _, obj := range s.Objects {
-		var buf bytes.Buffer
-
 		// Create a template, add the function map, and parse the text.
-		tmpl := generators.GetTemplate("routeTmpl")
-
-		// Run the template.
-		if err := tmpl.Execute(&buf, obj.Name); err != nil {
-			log.Fatalf("execution: %s", err)
+		str, err := generators.RunTemplate("routeTmpl", obj.Name)
+		if err != nil {
+			return "", err
 		}
 
-		goStr = goStr + buf.String()
+		goStr += str
 	}
 
-	goStr = goStr + fmt.Sprintf("\n}\n")
+	goStr += fmt.Sprintf("\n}\n")
 
 	// Generate REST handlers for each object
 	for _, obj := range s.Objects {
-		var buf bytes.Buffer
-		// Create a template, add the function map, and parse the text.
-		tmpl := generators.GetTemplate("handlerFuncs")
-
-		// Run the template.
-		if err := tmpl.Execute(&buf, obj.Name); err != nil {
-			log.Fatalf("execution: %s", err)
+		str, err := generators.RunTemplate("handlerFuncs", obj.Name)
+		if err != nil {
+			return "", err
 		}
 
-		goStr = goStr + buf.String()
+		goStr += str
 
 		//  Generate object validators
 		objStr, err := obj.GenerateValidate()
-		if err == nil {
-			goStr = goStr + objStr
+		if err != nil {
+			return "", err
 		}
+
+		goStr += objStr
 	}
 
-	return goStr
+	return goStr, nil
 }
 
 func (obj *Object) GenerateGoStructs() (string, error) {
