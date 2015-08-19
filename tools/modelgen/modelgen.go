@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/contiv/objmodel/tools/modelgen/generators"
 )
 
 var (
@@ -33,6 +34,9 @@ var (
 
 func main() {
 	flag.Parse()
+	if err := generators.ParseTemplates(); err != nil {
+		panic(err)
+	}
 
 	var schema *Schema
 
@@ -78,6 +82,9 @@ func main() {
 	outPath := "./"
 	if *output != "" {
 		outPath = *output
+		if err := os.MkdirAll(outPath, 0755); err != nil {
+			log.Fatalf("Error creating output directory: %v", err)
+		}
 	}
 
 	// Write the Go file output

@@ -2,7 +2,7 @@
 .PHONY: all build checks
 TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/client/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
 
-all: test build
+all: generate test build
 
 godep:
 	@if [ -z "`which godep`" ]; then go get -v github.com/kr/godep; fi
@@ -12,6 +12,9 @@ vet:
 
 checks: vet
 	./checks "$(TO_BUILD)"
+
+generate:
+	cd tools/modelgen/generators && sh build.sh >templates.go && gofmt -w -s templates.go
 
 build: godep checks
 	godep go install -v ./...

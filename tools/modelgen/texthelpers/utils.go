@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package texthelpers
 
 import (
 	"regexp"
@@ -29,25 +29,25 @@ var (
 	camelcase = regexp.MustCompile(`(?m)[-.$/:_{}\s]`)
 )
 
-func initialCap(ident string) string {
+func InitialCap(ident string) string {
 	if ident == "" {
 		panic("blank identifier")
 	}
-	return depunct(ident, true)
+	return Depunct(ident, true)
 }
 
-func initialLow(ident string) string {
+func InitialLow(ident string) string {
 	if ident == "" {
 		panic("blank identifier")
 	}
-	return depunct(ident, false)
+	return Depunct(ident, false)
 }
 
-func depunct(ident string, initialCap bool) string {
+func Depunct(ident string, initialCap bool) string {
 	matches := camelcase.Split(ident, -1)
 	for i, m := range matches {
 		if initialCap || i > 0 {
-			m = capFirst(m)
+			m = CapFirst(m)
 		}
 		matches[i] = acronyms.ReplaceAllStringFunc(m, func(c string) string {
 			if len(c) > 4 {
@@ -59,7 +59,7 @@ func depunct(ident string, initialCap bool) string {
 	return strings.Join(matches, "")
 }
 
-func capFirst(ident string) string {
+func CapFirst(ident string) string {
 	r, n := utf8.DecodeRuneInString(ident)
 	return string(unicode.ToUpper(r)) + ident[n:]
 }
