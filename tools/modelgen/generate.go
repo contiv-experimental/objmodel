@@ -74,19 +74,12 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 
 	goStr += buf.String()
 
-	// generate callback handler
-
-	// Generate an Init function
-	goStr = goStr + fmt.Sprintf("\nfunc Init() {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	collections.%ss = make(map[string]*%s)\n", obj.Name, texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	restore%s()\n", texthelpers.InitialCap(obj.Name))
+	tmpl = generators.GetTemplate("init")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
 
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	goStr += buf.String()
 
 	// Generate callback register functions
 	for _, obj := range s.Objects {
