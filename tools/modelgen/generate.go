@@ -54,18 +54,18 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	for _, obj := range s.Objects {
 		objStr, err := obj.GenerateGoStructs()
 		if err == nil {
-			goStr = goStr + objStr
+			goStr += objStr
 		}
 	}
 
-	// Generate a collection definitions to store the objects
-	goStr = goStr + fmt.Sprintf("\n\ntype Collections struct {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	%ss    map[string]*%s\n", obj.Name, texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	buf := new(bytes.Buffer)
 
-	goStr = goStr + fmt.Sprintf("var collections Collections\n\n")
+	tmpl := generators.GetTemplate("gostructs")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
+	}
+
+	goStr += buf.String()
 
 	// Generate callback interface
 	for _, obj := range s.Objects {
