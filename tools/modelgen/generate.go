@@ -54,56 +54,39 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 	for _, obj := range s.Objects {
 		objStr, err := obj.GenerateGoStructs()
 		if err == nil {
-			goStr = goStr + objStr
+			goStr += objStr
 		}
 	}
 
-	// Generate a collection definitions to store the objects
-	goStr = goStr + fmt.Sprintf("\n\ntype Collections struct {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	%ss    map[string]*%s\n", obj.Name, texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	buf := new(bytes.Buffer)
 
-	goStr = goStr + fmt.Sprintf("var collections Collections\n\n")
-
-	// Generate callback interface
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("type %sCallbacks interface {\n", texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sCreate(%s *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sUpdate(%s, params *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sDelete(%s *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("}\n\n")
+	tmpl := generators.GetTemplate("gostructs")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
 
-	// generate callback handler
-	goStr = goStr + fmt.Sprintf("type CallbackHandlers struct {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	%sCb %sCallbacks\n", texthelpers.InitialCap(obj.Name), texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	goStr += buf.String()
 
-	goStr = goStr + fmt.Sprintf("var objCallbackHandler CallbackHandlers\n\n")
-
-	// Generate an Init function
-	goStr = goStr + fmt.Sprintf("\nfunc Init() {\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	collections.%ss = make(map[string]*%s)\n", obj.Name, texthelpers.InitialCap(obj.Name))
-	}
-	goStr = goStr + fmt.Sprintf("\n")
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("	restore%s()\n", texthelpers.InitialCap(obj.Name))
+	tmpl = generators.GetTemplate("callbacks")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
 
-	goStr = goStr + fmt.Sprintf("}\n\n")
+	goStr += buf.String()
 
-	// Generate callback register functions
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("func Register%sCallbacks(handler %sCallbacks) {\n", texthelpers.InitialCap(obj.Name), texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	objCallbackHandler.%sCb = handler\n", texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("}\n\n")
+	tmpl = generators.GetTemplate("init")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
-	return goStr, nil
+
+	goStr += buf.String()
+
+	tmpl = generators.GetTemplate("register")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
+	}
+
+	return goStr + buf.String(), nil
 }
 
 // GenerateGoHdrs generates go file headers
