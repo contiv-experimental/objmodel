@@ -67,14 +67,12 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 
 	goStr += buf.String()
 
-	// Generate callback interface
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("type %sCallbacks interface {\n", texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sCreate(%s *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sUpdate(%s, params *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	%sDelete(%s *%s) error\n", texthelpers.InitialCap(obj.Name), obj.Name, texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("}\n\n")
+	tmpl = generators.GetTemplate("callbacks")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
+
+	goStr += buf.String()
 
 	// generate callback handler
 	goStr = goStr + fmt.Sprintf("type CallbackHandlers struct {\n")

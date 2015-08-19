@@ -1,6 +1,5 @@
 type Collections struct {
-  {{ range .Objects }}
-  {{ .Name }} map[string]*{{ initialCap .Name }}
+  {{ range .Objects }} {{ .Name }} map[string]*{{ initialCap .Name }}
   {{ end }}
 }
 
