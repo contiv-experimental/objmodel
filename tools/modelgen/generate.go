@@ -81,13 +81,12 @@ func (s *Schema) GenerateGoStructs() (string, error) {
 
 	goStr += buf.String()
 
-	// Generate callback register functions
-	for _, obj := range s.Objects {
-		goStr = goStr + fmt.Sprintf("func Register%sCallbacks(handler %sCallbacks) {\n", texthelpers.InitialCap(obj.Name), texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("	objCallbackHandler.%sCb = handler\n", texthelpers.InitialCap(obj.Name))
-		goStr = goStr + fmt.Sprintf("}\n\n")
+	tmpl = generators.GetTemplate("register")
+	if err := tmpl.Execute(buf, s); err != nil {
+		return "", err
 	}
-	return goStr, nil
+
+	return goStr + buf.String(), nil
 }
 
 // GenerateGoHdrs generates go file headers
