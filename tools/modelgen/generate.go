@@ -25,6 +25,14 @@ import (
 	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
 )
 
+var validPropertyTypes = []string{
+	"string",
+	"bool",
+	"array",
+	"number",
+	"int",
+}
+
 // GenerateGo generates go code for the schema
 func (s *Schema) GenerateGo() (string, error) {
 	// Generate file headers
@@ -100,9 +108,10 @@ func (obj *Object) GenerateGoStructs() (string, error) {
 	// Walk each property and generate code for it
 	for _, prop := range obj.Properties {
 		propStr, err := prop.GenerateGoStructs()
-		if err == nil {
-			goStr = goStr + propStr
+		if err != nil {
+			return "", err
 		}
+		goStr += propStr
 	}
 
 	// add link-sets
@@ -156,29 +165,17 @@ func (obj *Object) GenerateValidate() (string, error) {
 }
 
 func (prop *Property) GenerateGoStructs() (string, error) {
-	var goStr string
+	var found bool
 
-	goStr = fmt.Sprintf("	%s	", texthelpers.InitialCap(prop.Name))
-	switch prop.Type {
-	case "string":
-		fallthrough
-	case "number":
-		fallthrough
-	case "int":
-		fallthrough
-	case "bool":
-		subStr := texthelpers.TranslatePropertyType(prop.Type)
-		goStr = goStr + fmt.Sprintf("%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
-	case "array":
-		subStr := texthelpers.TranslatePropertyType(prop.Items)
-		if subStr == "" {
-			return "", errors.New("Unknown array items")
+	for _, myType := range validPropertyTypes {
+		if myType == prop.Type {
+			found = true
 		}
+	}
 
-		goStr = goStr + fmt.Sprintf("[]%s		`json:\"%s,omitempty\"`\n", subStr, prop.Name)
-	default:
+	if !found {
 		return "", errors.New("Unknown Property")
 	}
 
-	return goStr, nil
+	return generators.RunTemplate("propstruct", prop)
 }

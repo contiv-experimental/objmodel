@@ -10,10 +10,11 @@ import (
 var templateMap = map[string]*template.Template{}
 
 var funcMap = template.FuncMap{
-	"initialCap": texthelpers.InitialCap,
-	"initialLow": texthelpers.InitialLow,
-	"depunct":    texthelpers.Depunct,
-	"capFirst":   texthelpers.CapFirst,
+	"initialCap":    texthelpers.InitialCap,
+	"initialLow":    texthelpers.InitialLow,
+	"depunct":       texthelpers.Depunct,
+	"capFirst":      texthelpers.CapFirst,
+	"translateType": texthelpers.TranslatePropertyType,
 }
 
 func ParseTemplates() error {
