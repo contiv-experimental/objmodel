@@ -16,7 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -143,23 +142,6 @@ func (obj *Object) GenerateGoStructs() (string, error) {
 		}
 		goStr = goStr + fmt.Sprintf("}\n\n")
 	}
-
-	return goStr, nil
-}
-
-func (obj *Object) GenerateValidate() (string, error) {
-	var goStr string
-
-	var buf bytes.Buffer
-	// Create a template, add the function map, and parse the text.
-	tmpl := generators.GetTemplate("validateFunc")
-
-	// Run the template.
-	if err := tmpl.Execute(&buf, obj); err != nil {
-		log.Fatalf("execution: %s", err)
-	}
-
-	goStr = goStr + buf.String()
 
 	return goStr, nil
 }
