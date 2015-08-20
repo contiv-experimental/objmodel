@@ -46,7 +46,7 @@ func (s *Schema) GenerateGo() (string, error) {
 	}
 
 	// Merge the header and struct
-	outStr = outStr + structStr
+	outStr += structStr
 
 	// Merge rest handler
 	str, err := s.GenerateGoFuncs()
