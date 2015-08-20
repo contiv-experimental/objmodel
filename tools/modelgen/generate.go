@@ -17,11 +17,9 @@ package main
 
 import (
 	"errors"
-	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/tools/modelgen/generators"
-	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
 )
 
 var validPropertyTypes = []string{
@@ -96,54 +94,7 @@ func (s *Schema) GenerateGoFuncs() (string, error) {
 }
 
 func (obj *Object) GenerateGoStructs() (string, error) {
-	var goStr string
-
-	objName := texthelpers.InitialCap(obj.Name)
-	goStr = goStr + fmt.Sprintf("type %s struct {\n", objName)
-
-	// every object has a key
-	goStr = goStr + fmt.Sprintf("	Key		string		`json:\"key,omitempty\"`\n")
-
-	// Walk each property and generate code for it
-	for _, prop := range obj.Properties {
-		propStr, err := prop.GenerateGoStructs()
-		if err != nil {
-			return "", err
-		}
-		goStr += propStr
-	}
-
-	// add link-sets
-	if len(obj.LinkSets) > 0 {
-		goStr = goStr + fmt.Sprintf("	LinkSets	%sLinkSets		`json:\"link-sets,omitempty\"`\n", objName)
-	}
-
-	// add links
-	if len(obj.Links) > 0 {
-		goStr = goStr + fmt.Sprintf("	Links	%sLinks		`json:\"links,omitempty\"`\n", objName)
-	}
-
-	goStr = goStr + fmt.Sprintf("}\n\n")
-
-	// define object's linkset
-	if len(obj.LinkSets) > 0 {
-		goStr = goStr + fmt.Sprintf("type %sLinkSets struct {\n", objName)
-		for lsName := range obj.LinkSets {
-			goStr = goStr + fmt.Sprintf("	%s	map[string]modeldb.Link		`json:\"%s,omitempty\"`\n", texthelpers.InitialCap(lsName), lsName)
-		}
-		goStr = goStr + fmt.Sprintf("}\n\n")
-	}
-
-	// Define object's links
-	if len(obj.Links) > 0 {
-		goStr = goStr + fmt.Sprintf("type %sLinks struct {\n", objName)
-		for lName := range obj.Links {
-			goStr = goStr + fmt.Sprintf("	%s	modeldb.Link		`json:\"%s,omitempty\"`\n", texthelpers.InitialCap(lName), lName)
-		}
-		goStr = goStr + fmt.Sprintf("}\n\n")
-	}
-
-	return goStr, nil
+	return generators.RunTemplate("objstruct", obj)
 }
 
 func (prop *Property) GenerateGoStructs() (string, error) {
