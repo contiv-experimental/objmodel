@@ -14,7 +14,7 @@ checks: vet
 	./checks "$(TO_BUILD)"
 
 generate:
-	cd tools/modelgen/generators && sh build.sh >templates.go && gofmt -w -s templates.go
+	cd tools/modelgen/generators && bash build.sh >templates.go && gofmt -w -s templates.go
 
 build: godep checks generate
 	godep go install -v ./...

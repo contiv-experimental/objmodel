@@ -16,6 +16,7 @@ limitations under the License.
 package texthelpers
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -62,4 +63,22 @@ func Depunct(ident string, initialCap bool) string {
 func CapFirst(ident string) string {
 	r, n := utf8.DecodeRuneInString(ident)
 	return string(unicode.ToUpper(r)) + ident[n:]
+}
+
+func TranslatePropertyType(propType string) string {
+	var goStr string
+	switch propType {
+	case "string":
+		goStr = goStr + fmt.Sprintf("string")
+	case "number":
+		goStr = goStr + fmt.Sprintf("float64")
+	case "int":
+		goStr = goStr + fmt.Sprintf("int64")
+	case "bool":
+		goStr = goStr + fmt.Sprintf("bool")
+	default:
+		return ""
+	}
+
+	return goStr
 }

@@ -23,10 +23,15 @@ import (
 	"testing"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/contiv/objmodel/tools/modelgen/generators"
 )
 
 // Simple test to parse json schema
 func TestParseJsonSchema(t *testing.T) {
+	if err := generators.ParseTemplates(); err != nil {
+		t.Fatal(err)
+	}
+
 	inputStr, err := ioutil.ReadFile("./test_input.json")
 	if err != nil {
 		t.Fatalf("Could not read expected output file ./test_input.json")
