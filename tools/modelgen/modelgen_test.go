@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/tools/modelgen/generators"
 )
 
@@ -32,41 +32,69 @@ func TestParseJsonSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	inputStr, err := ioutil.ReadFile("./test_input.json")
+	dir, err := os.Open("testdata")
 	if err != nil {
-		t.Fatalf("Could not read expected output file ./test_input.json")
+		t.Fatal(err)
 	}
 
-	// Parse the input json string
-	schema, err := ParseSchema([]byte(inputStr))
+	dirnames, err := dir.Readdirnames(0)
 	if err != nil {
-		t.Fatalf("Error parsing json schema. Err: %v", err)
+		t.Fatal(err)
 	}
 
-	log.Printf("Parsed json schema: %+v", schema)
+	for _, name := range dirnames {
+		t.Logf("Parsing suite %s", name)
+		basepath := filepath.Join("testdata", name)
+		input, err := ioutil.ReadFile(filepath.Join(basepath, "input.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// Generate the code
-	goStr, err := schema.GenerateGo()
-	if err != nil {
-		t.Fatalf("Error generating go code. Err: %v", err)
-	}
+		// Parse the input json string
+		schema, err := ParseSchema(input)
+		if err != nil {
+			t.Fatalf("Error parsing json schema. Err: %v", err)
+		}
 
-	// Write the output
-	log.Debugf("Generated go code: \n\n%s", goStr)
-	gotFile, _ := os.Create("./test_got.txt")
-	fmt.Fprintln(gotFile, goStr)
+		// Generate the code
+		goStr, err := schema.GenerateGo()
+		if err != nil {
+			t.Fatalf("Error generating go code. Err: %v", err)
+		}
 
-	// Read the expected output file
-	b, err := ioutil.ReadFile("./test_expected.txt")
-	if err != nil {
-		t.Fatalf("Could not read expected output file ./test_expected.txt")
-	}
+		cmd := exec.Command("gofmt", "-s")
+		w, err := cmd.StdinPipe()
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// Make sure every line in expected output is present in the gotten output
-	exp_lines := strings.Split(string(b), "\n")
-	for _, line := range exp_lines {
-		if !strings.Contains(goStr, line) {
-			t.Fatalf("Generated code does not match expected output")
+		r, err := cmd.StdoutPipe()
+
+		cmd.Start()
+
+		if _, err := w.Write([]byte(goStr)); err != nil {
+			t.Fatal(err)
+		}
+
+		w.Close()
+
+		gobytes, err := ioutil.ReadAll(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if err := cmd.Wait(); err != nil {
+			t.Fatal(err)
+		}
+
+		output, err := ioutil.ReadFile(filepath.Join(basepath, "output.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if string(gobytes) != string(output) {
+			fmt.Printf("Generated string:\n%s\n", goStr)
+			t.Fatalf("Generated string from input was not equal to output string")
 		}
 	}
 }
