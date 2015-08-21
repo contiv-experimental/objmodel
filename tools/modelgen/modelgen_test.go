@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -62,37 +61,12 @@ func TestParseJsonSchema(t *testing.T) {
 			t.Fatalf("Error generating go code. Err: %v", err)
 		}
 
-		cmd := exec.Command("gofmt", "-s")
-		w, err := cmd.StdinPipe()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		r, err := cmd.StdoutPipe()
-
-		cmd.Start()
-
-		if _, err := w.Write([]byte(goStr)); err != nil {
-			t.Fatal(err)
-		}
-
-		w.Close()
-
-		gobytes, err := ioutil.ReadAll(r)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if err := cmd.Wait(); err != nil {
-			t.Fatal(err)
-		}
-
 		output, err := ioutil.ReadFile(filepath.Join(basepath, "output.go"))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if string(gobytes) != string(output) {
+		if goStr != string(output) {
 			fmt.Printf("Generated string:\n%s\n", goStr)
 			t.Fatalf("Generated string from input was not equal to output string")
 		}

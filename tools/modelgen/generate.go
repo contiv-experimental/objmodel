@@ -17,6 +17,7 @@ package main
 
 import (
 	"errors"
+	"go/format"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/tools/modelgen/generators"
@@ -54,7 +55,8 @@ func (s *Schema) GenerateGo() (string, error) {
 		return "", err
 	}
 
-	return outStr + str, nil
+	gobytes, err := format.Source([]byte(outStr + str))
+	return string(gobytes), err
 }
 
 // GenerateGoStructs generates go code from a schema
