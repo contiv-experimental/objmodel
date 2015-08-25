@@ -5,49 +5,62 @@
 package contivModel
 
 import (
-	"errors"
-	"regexp"
-	"net/http"
 	"encoding/json"
+	"errors"
+	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb/modeldb"
 	"github.com/gorilla/mux"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
+	"regexp"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
 
 type Tenant struct {
-	Key		string		`json:"key,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	LinkSets	TenantLinkSets		`json:"link-sets,omitempty"`
+	// every object has a key
+	Key string `json:"key,omitempty"`
+
+	TenantName strings `json:"tenantName,omitempty"`
+
+	// add link-sets
+	LinkSets TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Networks	map[string]modeldb.Link		`json:"networks,omitempty"`
+	TenantNetworks map[string]modeldb.Link `json:"TenantNetworks,omitempty"`
 }
 
 type Network struct {
-	Key		string		`json:"key,omitempty"`
-	IsPublic	bool		`json:"isPublic,omitempty"`
-	IsPrivate	bool		`json:"isPrivate,omitempty"`
-	Encap	string		`json:"encap,omitempty"`
-	PktTag	int64		`json:"pktTag,omitempty"`
-	Subnet	string		`json:"subnet,omitempty"`
-	Labels	[]string		`json:"labels,omitempty"`
-	NetworkName	string		`json:"networkName,omitempty"`
-	TenantName	string		`json:"tenantName,omitempty"`
-	Links	NetworkLinks		`json:"links,omitempty"`
+	// every object has a key
+	Key string `json:"key,omitempty"`
+
+	Encap strings `json:"encap,omitempty"`
+
+	IsPrivate bools `json:"isPrivate,omitempty"`
+
+	IsPublic bools `json:"isPublic,omitempty"`
+
+	Labels []s `json:"labels,omitempty"`
+
+	NetworkName strings `json:"networkName,omitempty"`
+
+	PktTag int64s `json:"pktTag,omitempty"`
+
+	Subnet strings `json:"subnet,omitempty"`
+
+	TenantName strings `json:"tenantName,omitempty"`
+
+	// add links
+	Links NetworkLinks `json:"links,omitempty"`
 }
 
 type NetworkLinks struct {
-	Tenant	modeldb.Link		`json:"tenant,omitempty"`
+	NetworkTenant modeldb.Link `json:"NetworkTenant,omitempty"`
 }
 
-
-
 type Collections struct {
-	tenants    map[string]*Tenant
-	networks    map[string]*Network
+	tenants  map[string]*Tenant
+	networks map[string]*Network
 }
 
 var collections Collections
@@ -65,12 +78,11 @@ type NetworkCallbacks interface {
 }
 
 type CallbackHandlers struct {
-	TenantCb TenantCallbacks
+	TenantCb  TenantCallbacks
 	NetworkCb NetworkCallbacks
 }
 
 var objCallbackHandler CallbackHandlers
-
 
 func Init() {
 	collections.tenants = make(map[string]*Tenant)
@@ -78,6 +90,7 @@ func Init() {
 
 	restoreTenant()
 	restoreNetwork()
+
 }
 
 func RegisterTenantCallbacks(handler TenantCallbacks) {
@@ -87,7 +100,6 @@ func RegisterTenantCallbacks(handler TenantCallbacks) {
 func RegisterNetworkCallbacks(handler NetworkCallbacks) {
 	objCallbackHandler.NetworkCb = handler
 }
-
 
 // Simple Wrapper for http handlers
 func makeHttpHandler(handlerFunc HttpApiFunc) http.HandlerFunc {
@@ -374,14 +386,13 @@ func restoreTenant() error {
 // Validate a tenant object
 func ValidateTenant(obj *Tenant) error {
 	// Validate key is correct
-	keyStr := obj.TenantName 
+	keyStr := obj.TenantName
 	if obj.Key != keyStr {
 		log.Errorf("Expecting Tenant Key: %s. Got: %s", keyStr, obj.Key)
 		return errors.New("Invalid Key")
 	}
 
 	// Validate each field
-	     
 
 	return nil
 }
@@ -610,44 +621,42 @@ func restoreNetwork() error {
 // Validate a network object
 func ValidateNetwork(obj *Network) error {
 	// Validate key is correct
-	keyStr := obj.TenantName + ":" + obj.NetworkName 
+	keyStr := obj.TenantName + ":" + obj.NetworkName
 	if obj.Key != keyStr {
 		log.Errorf("Expecting Network Key: %s. Got: %s", keyStr, obj.Key)
 		return errors.New("Invalid Key")
 	}
 
 	// Validate each field
-	  
+
 	if len(obj.Encap) > 32 {
 		return errors.New("encap string too long")
 	}
-    
+
 	if obj.IsPrivate == false {
 		obj.IsPrivate = true
 	}
-   
+
 	if obj.IsPublic == false {
 		obj.IsPublic = false
 	}
-        
+
 	if obj.PktTag == 0 {
 		obj.PktTag = 1
 	}
- 
+
 	if obj.PktTag < 1 {
 		return errors.New("pktTag Value Out of bound")
 	}
- 
+
 	if obj.PktTag > 4094 {
 		return errors.New("pktTag Value Out of bound")
 	}
-     
+
 	subnetMatch := regexp.MustCompile("^([0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?.[0-9]{1,3}?/[0-9]{1,2}?)$")
 	if subnetMatch.MatchString(obj.Subnet) == false {
 		return errors.New("subnet string invalid format")
 	}
-       
 
 	return nil
 }
-

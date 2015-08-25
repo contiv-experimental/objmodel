@@ -40,4 +40,4 @@ host-test: etcd build
 
 reflex:
 	# go get github.com/cespare/reflex
-	reflex -r '.*\.go' make test
+	reflex -r '.*\.go' -R tools/modelgen/generators/templates.go make test
