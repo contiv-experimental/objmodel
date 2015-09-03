@@ -69,9 +69,14 @@ func (self *EtcdPlugin) GetService(name string) ([]api.ServiceInfo, error) {
 
 	// Get the object from etcd client
 	resp, err := self.client.Get(keyName, true, true)
-	if err != nil && !strings.Contains(err.Error(), "Key not found") {
-		log.Errorf("Error getting key %s. Err: %v", keyName, err)
-		return nil, err
+	if err != nil {
+		if strings.Contains(err.Error(), "Key not found") {
+			return nil, nil
+		} else {
+			log.Errorf("Error getting key %s. Err: %v", keyName, err)
+			return nil, err
+		}
+
 	}
 
 	if !resp.Node.Dir {
