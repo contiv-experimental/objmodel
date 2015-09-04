@@ -56,7 +56,11 @@ func (s *Schema) GenerateGo() (string, error) {
 	}
 
 	gobytes, err := format.Source([]byte(outStr + str))
-	return string(gobytes), err
+	if err != nil {
+		return outStr + str, err
+	}
+
+	return string(gobytes), nil
 }
 
 // GenerateGoStructs generates go code from a schema

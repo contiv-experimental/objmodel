@@ -73,18 +73,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Generate Go code
-	outStr, err := schema.GenerateGo()
-	if err != nil {
-		log.Fatalf("Error generating go structs. Err: %v", err)
-	}
-
 	outPath := "./"
 	if *output != "" {
 		outPath = *output
 		if err := os.MkdirAll(outPath, 0755); err != nil {
 			log.Fatalf("Error creating output directory: %v", err)
 		}
+	}
+
+	// Generate Go code
+	outStr, err := schema.GenerateGo()
+	if err != nil {
+		log.Errorf("Error generating go structs. Err: %v", err)
+		// XXX fallthrough so we can write the files
 	}
 
 	// Write the Go file output
