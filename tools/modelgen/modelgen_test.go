@@ -67,8 +67,11 @@ func TestParseJsonSchema(t *testing.T) {
 		}
 
 		if goStr != string(output) {
-			fmt.Printf("Generated string:\n%s\n", goStr)
-			t.Fatalf("Generated string from input was not equal to output string")
+			if err := ioutil.WriteFile("/tmp/generated.go", []byte(goStr), 0666); err != nil {
+				t.Fatalf("Err writing debug file `/tmp/generated.go` during failed test: %v", err)
+			}
+			fmt.Println("Generated code written to /tmp/generated.go")
+			t.Fatal("Generated string from input was not equal to output string")
 		}
 	}
 }
