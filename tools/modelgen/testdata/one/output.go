@@ -27,7 +27,7 @@ type Tenant struct {
 }
 
 type TenantLinkSets struct {
-	TenantNetworks map[string]modeldb.Link `json:"TenantNetworks,omitempty"`
+	Networks map[string]modeldb.Link `json:"Networks,omitempty"`
 }
 
 type Network struct {
@@ -57,7 +57,7 @@ type Network struct {
 }
 
 type NetworkLinks struct {
-	NetworkTenant modeldb.Link `json:"NetworkTenant,omitempty"`
+	Tenant modeldb.Link `json:"Tenant,omitempty"`
 }
 
 type Collections struct {

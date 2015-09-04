@@ -66,13 +66,13 @@ func ParseSchema(input []byte) (*Schema, error) {
 		// parse links and linksets
 		for lsName, ls := range obj.LinkSets {
 			// set the name
-			ls.Name = texthelpers.InitialCap(obj.Name) + texthelpers.InitialCap(lsName)
+			ls.Name = texthelpers.InitialCap(lsName)
 
 			// FIXME: perform error checking
 		}
 		for lName, link := range obj.Links {
 			// set the name
-			link.Name = texthelpers.InitialCap(obj.Name) + texthelpers.InitialCap(lName)
+			link.Name = texthelpers.InitialCap(lName)
 
 			// FIXME: perform error checking
 		}
