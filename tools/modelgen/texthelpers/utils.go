@@ -16,7 +16,6 @@ limitations under the License.
 package texthelpers
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -69,13 +68,13 @@ func TranslatePropertyType(propType string) string {
 	var goStr string
 	switch propType {
 	case "string":
-		goStr = goStr + fmt.Sprintf("string")
+		fallthrough
 	case "number":
-		goStr = goStr + fmt.Sprintf("float64")
+		fallthrough
 	case "int":
-		goStr = goStr + fmt.Sprintf("int64")
+		fallthrough
 	case "bool":
-		goStr = goStr + fmt.Sprintf("bool")
+		return propType
 	default:
 		return ""
 	}
