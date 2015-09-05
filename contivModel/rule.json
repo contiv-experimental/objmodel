@@ -43,6 +43,10 @@
 				"port": {
 					"type": "int",
 					"max": 65535
+				},
+				"action": {
+					"type": "string",
+					"format": "^(accept|deny)$"
 				}
 			},
 			"link-sets": {
