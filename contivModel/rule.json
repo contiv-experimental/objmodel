@@ -23,7 +23,7 @@
 				},
 				"direction": {
 					"type": "string",
-					"format": "^(in|out)$"
+					"format": "^(in|out|both)$"
 				},
 				"endpointGroup": {
 					"type": "string",

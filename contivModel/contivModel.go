@@ -1753,7 +1753,7 @@ func ValidateRule(obj *Rule) error {
 		return errors.New("action string invalid format")
 	}
 
-	directionMatch := regexp.MustCompile("^(in|out)$")
+	directionMatch := regexp.MustCompile("^(in|out|both)$")
 	if directionMatch.MatchString(obj.Direction) == false {
 		return errors.New("direction string invalid format")
 	}
