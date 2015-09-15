@@ -118,8 +118,9 @@ type Rule struct {
 	Network       string `json:"network,omitempty"`
 	PolicyName    string `json:"policyName,omitempty"`
 	Port          int    `json:"port,omitempty"`
+	Priority      int    `json:"priority,omitempty"`
 	Protocol      string `json:"protocol,omitempty"`
-	RuleName      string `json:"ruleName,omitempty"`
+	RuleID        string `json:"ruleId,omitempty"`
 	TenantName    string `json:"tenantName,omitempty"`
 
 	// add link-sets and links
@@ -1740,7 +1741,7 @@ func restoreRule() error {
 // Validate a rule object
 func ValidateRule(obj *Rule) error {
 	// Validate key is correct
-	keyStr := obj.TenantName + ":" + obj.PolicyName + ":" + obj.RuleName
+	keyStr := obj.TenantName + ":" + obj.PolicyName + ":" + obj.RuleID
 	if obj.Key != keyStr {
 		log.Errorf("Expecting Rule Key: %s. Got: %s", keyStr, obj.Key)
 		return errors.New("Invalid Key")
@@ -1774,13 +1775,25 @@ func ValidateRule(obj *Rule) error {
 		return errors.New("port Value Out of bound")
 	}
 
-	protocolMatch := regexp.MustCompile("^(tcp|udp|icmp|[0-9]{1,3}?)$")
+	if obj.Priority == 0 {
+		obj.Priority = 1
+	}
+
+	if obj.Priority < 1 {
+		return errors.New("priority Value Out of bound")
+	}
+
+	if obj.Priority > 100 {
+		return errors.New("priority Value Out of bound")
+	}
+
+	protocolMatch := regexp.MustCompile("^(tcp|udp|icmp||[0-9]{1,3}?)$")
 	if protocolMatch.MatchString(obj.Protocol) == false {
 		return errors.New("protocol string invalid format")
 	}
 
-	if len(obj.RuleName) > 64 {
-		return errors.New("ruleName string too long")
+	if len(obj.RuleID) > 64 {
+		return errors.New("ruleId string too long")
 	}
 
 	if len(obj.TenantName) > 64 {
