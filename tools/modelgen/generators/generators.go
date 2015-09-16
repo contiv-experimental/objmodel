@@ -2,6 +2,7 @@ package generators
 
 import (
 	"bytes"
+	"strings"
 	"text/template"
 
 	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
@@ -41,5 +42,5 @@ func RunTemplate(templateName string, obj interface{}) (string, error) {
 		return "", err
 	}
 
-	return buf.String(), nil
+	return strings.TrimSuffix(buf.String(), "\n  "), nil
 }

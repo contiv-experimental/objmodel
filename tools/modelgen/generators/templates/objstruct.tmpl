@@ -1,22 +1,17 @@
 type {{ initialCap .Name }} struct {
 	// every object has a key
 	Key		string		`json:"key,omitempty"`
-  {{ range .Properties }}
-  {{ .GenerateGoStructs }}
-  {{ end }}
+
+  {{ range .Properties }} {{ .GenerateGoStructs }} {{ end }}
 
   {{ if .LinkSets | len }}
-  // add link-sets
+  // add link-sets and links
 	LinkSets	{{ initialCap .Name }}LinkSets		`json:"link-sets,omitempty"`
-  {{ end }}
-
-	{{ if .Links | len }}
-	// add links
-  Links	{{ initialCap .Name }}Links		`json:"links,omitempty"`
+  {{ end }} {{ if .Links | len }} Links	{{ initialCap .Name }}Links		`json:"links,omitempty"`
   {{ end }}
 }
 
-{{ if .LinkSets | len }} 
+{{ if .LinkSets | len }}
 type {{ initialCap .Name }}LinkSets struct {
   {{ range .LinkSets }} {{ initialCap .Name }}	map[string]modeldb.Link		`json:"{{ .Name }},omitempty"`
   {{end}}
