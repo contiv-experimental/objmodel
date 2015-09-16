@@ -18,7 +18,6 @@ package main
 import (
 	"errors"
 	"go/format"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/tools/modelgen/generators"
@@ -61,7 +60,7 @@ func (s *Schema) GenerateGo() (string, error) {
 		return outStr + str, err
 	}
 
-	return strings.TrimSuffix(string(gobytes), "\n"), nil
+	return string(gobytes), nil
 }
 
 // GenerateGoStructs generates go code from a schema

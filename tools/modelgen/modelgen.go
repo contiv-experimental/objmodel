@@ -90,14 +90,11 @@ func main() {
 
 	// Write the Go file output
 	goFileName := path.Join(outPath, schema.Name+".go")
-	file, err := os.Create(goFileName)
+	fmt.Printf("Writing to file: %s\n", goFileName)
+	err = ioutil.WriteFile(goFileName, []byte(outStr), 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("Writing to file: %s\n", goFileName)
-
-	fmt.Fprintln(file, outStr)
 
 	// Generate javascript
 	outStr, err = schema.GenerateJs()
@@ -107,12 +104,9 @@ func main() {
 
 	// Write javascript file
 	jsFileName := path.Join(outPath, schema.Name+".js")
-	file, err = os.Create(jsFileName)
+	fmt.Printf("Writing to file: %s\n", jsFileName)
+	err = ioutil.WriteFile(jsFileName, []byte(outStr), 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("Writing to file: %s\n", jsFileName)
-
-	fmt.Fprintln(file, outStr)
 }
