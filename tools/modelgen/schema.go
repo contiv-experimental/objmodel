@@ -43,6 +43,7 @@ type Property struct {
 	Length      uint    `json:"length,omitempty"`
 	Default     string  `json:"default,omitempty"`
 	Format      string  `json:"format,omitempty"`
+	ShowSummary bool    `json:"showSummary,omitempty"`
 }
 
 type LinkSet struct {

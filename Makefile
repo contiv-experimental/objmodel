@@ -13,12 +13,16 @@ vet:
 checks: vet
 	./checks "$(TO_BUILD)"
 
-generate:
+generator:
 	cd tools/modelgen/generators && bash build.sh >templates.go && gofmt -w -s templates.go
 
-build: godep checks generate
-	godep go install -v ./...
+generate:
+	cd contivModel && bash generate.sh
+
+build: godep checks generator
 	make clean
+	godep go install -v ./...
+	make generate
 
 etcd:
 	pkill etcd || exit 0

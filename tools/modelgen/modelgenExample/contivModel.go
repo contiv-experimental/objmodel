@@ -7,41 +7,46 @@ package contivModel
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
-	"regexp"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/objmodel/objdb/modeldb"
 	"github.com/gorilla/mux"
+	"net/http"
+	"regexp"
 )
 
 type HttpApiFunc func(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error)
-
 type Network struct {
-	Key         string       `json:"key,omitempty"`
-	TenantName  string       `json:"tenantName,omitempty"`
-	IsPublic    bool         `json:"isPublic,omitempty"`
-	IsPrivate   bool         `json:"isPrivate,omitempty"`
-	Encap       string       `json:"encap,omitempty"`
-	PktTag      int64        `json:"pktTag,omitempty"`
-	Subnet      string       `json:"subnet,omitempty"`
-	Labels      []string     `json:"labels,omitempty"`
-	NetworkName string       `json:"networkName,omitempty"`
-	Links       NetworkLinks `json:"links,omitempty"`
+	// every object has a key
+	Key string `json:"key,omitempty"`
+
+	Encap       string   `json:"encap,omitempty"`
+	IsPrivate   bool     `json:"isPrivate,omitempty"`
+	IsPublic    bool     `json:"isPublic,omitempty"`
+	Labels      []string `json:"labels,omitempty"`
+	NetworkName string   `json:"networkName,omitempty"`
+	PktTag      int      `json:"pktTag,omitempty"`
+	Subnet      string   `json:"subnet,omitempty"`
+	TenantName  string   `json:"tenantName,omitempty"`
+
+	Links NetworkLinks `json:"links,omitempty"`
 }
 
 type NetworkLinks struct {
-	Tenant modeldb.Link `json:"tenant,omitempty"`
+	Tenant modeldb.Link `json:"Tenant,omitempty"`
 }
 
 type Tenant struct {
-	Key        string         `json:"key,omitempty"`
-	TenantName string         `json:"tenantName,omitempty"`
-	LinkSets   TenantLinkSets `json:"link-sets,omitempty"`
+	// every object has a key
+	Key string `json:"key,omitempty"`
+
+	TenantName string `json:"tenantName,omitempty"`
+
+	// add link-sets and links
+	LinkSets TenantLinkSets `json:"link-sets,omitempty"`
 }
 
 type TenantLinkSets struct {
-	Networks map[string]modeldb.Link `json:"networks,omitempty"`
+	Networks map[string]modeldb.Link `json:"Networks,omitempty"`
 }
 
 type Collections struct {
@@ -76,6 +81,7 @@ func Init() {
 
 	restoreNetwork()
 	restoreTenant()
+
 }
 
 func RegisterNetworkCallbacks(handler NetworkCallbacks) {

@@ -1,6 +1,8 @@
 // policy.js
 // Display Policy information
 
+var contivModel = require("../contivModel")
+
 var PolicyPane = React.createClass({
   	render: function() {
 		var self = this
@@ -9,32 +11,12 @@ var PolicyPane = React.createClass({
 			return <div> </div>
 		}
 
-		// Walk thru all the altas and see which ones are on this node
-		var policyListView = self.props.policies.map(function(policy){
-			return (
-				<tr key={policy.key} className="info">
-					<td>{policy.tenantName}</td>
-					<td>{policy.policyName}</td>
-				</tr>
-			);
-		});
-
-		// Render the pane
-		return (
-        <div style={{margin: '5%',}}>
-			<Table hover>
-				<thead>
-					<tr>
-						<th>Tenant</th>
-						<th>Policy</th>
-					</tr>
-				</thead>
-				<tbody>
-            		{policyListView}
-				</tbody>
-			</Table>
-        </div>
-    );
+        var PolicySummaryView = contivModel.PolicySummaryView
+        return (
+            <div style={{margin: '5%',}}>
+                <PolicySummaryView key="policySummary" policys={self.props.policies}/>
+            </div>
+        );
 	}
 });
 

@@ -8,6 +8,8 @@ var GroupsPane = require("./groups")
 var PolicyPane = require("./policy")
 var VolumesPane = require("./volumes")
 
+window.globalRefreshDelay = 300
+
 // Define tabs
 var ControlledTabArea = React.createClass({
   getInitialState: function() {
@@ -43,7 +45,7 @@ var ControlledTabArea = React.createClass({
         window.globalEndpoints = data
       }.bind(this),
       error: function(xhr, status, err) {
-        console.error("/endpoints", status, err.toString());
+        // console.error("/endpoints", status, err.toString());
       }.bind(this)
     });
 
@@ -127,10 +129,9 @@ var ControlledTabArea = React.createClass({
     this.getStateFromServer();
 
     // Get state every 2 sec
-    setInterval(this.getStateFromServer, 2000);
+    setInterval(this.getStateFromServer, window.globalRefreshDelay);
   },
   handleSelect: function(key) {
-    console.log('selected Tab ' + key);
     this.setState({key: key});
   },
 
