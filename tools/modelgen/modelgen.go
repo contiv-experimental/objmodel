@@ -47,7 +47,7 @@ func main() {
 		}
 
 		// Ignore non-json files
-		if filepath.Ext(path) != ".json" {
+		if filepath.Ext(path) != ".json" || filepath.Dir(path) != filepath.Dir(*source) {
 			return nil
 		}
 

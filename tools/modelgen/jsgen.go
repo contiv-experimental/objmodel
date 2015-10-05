@@ -21,12 +21,23 @@ import (
 	//"strings"
 	//"regexp"
 	"bytes"
+
+	"github.com/contiv/objmodel/tools/modelgen/generators"
+	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
 	//"unicode"
 	//"unicode/utf8"
 	"text/template"
 
 	//log "github.com/Sirupsen/logrus"
 )
+
+var funcMap = template.FuncMap{
+	"initialCap":    texthelpers.InitialCap,
+	"initialLow":    texthelpers.InitialLow,
+	"depunct":       texthelpers.Depunct,
+	"capFirst":      texthelpers.CapFirst,
+	"translateType": texthelpers.TranslatePropertyType,
+}
 
 func (s *Schema) GenerateJs() (string, error) {
 	var goStr string
@@ -38,7 +49,7 @@ func (s *Schema) GenerateJs() (string, error) {
 `
 
 	// Generate file headers
-	tmpl, _ := template.New("hdrTmpl").Parse(hdr)
+	tmpl, _ := template.New("hdrTmpl").Funcs(funcMap).Parse(hdr)
 	tmpl.Execute(&buf, s.Name)
 	goStr = goStr + buf.String()
 
@@ -54,7 +65,10 @@ func (s *Schema) GenerateJs() (string, error) {
 }
 
 func (obj *Object) GenerateJsViews() (string, error) {
-	var goStr string
+	goStr, err := generators.RunTemplate("jsView", obj)
+	if err != nil {
+		return "", err
+	}
 
 	return goStr, nil
 }
