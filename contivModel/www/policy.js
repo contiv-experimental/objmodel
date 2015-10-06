@@ -3,6 +3,115 @@
 
 var contivModel = require("../contivModel")
 
+var PolicySummaryView = React.createClass({
+  	render: function() {
+		var self = this
+
+		// Walk thru all objects
+		var policyListView = self.props.policys.map(function(policy){
+			return (
+				<ModalTrigger modal={<PolicyModalView policy={ policy }/>}>
+					<tr key={ policy.key } className="info">
+						<td>{ policy.tenantName }</td>
+                        <td>{ policy.policyName }</td>
+					</tr>
+				</ModalTrigger>
+			);
+		});
+
+		return (
+        <div>
+			<Table hover>
+				<thead>
+					<tr>
+						<th> Tenant Name </th>
+                        <th> Policy Name </th>
+					</tr>
+				</thead>
+				<tbody>
+            		{ policyListView }
+				</tbody>
+			</Table>
+        </div>
+    	);
+	}
+});
+
+var PolicyModalView = React.createClass({
+	render() {
+		var obj = this.props.policy
+
+        var rules = window.globalRules.filter(function(rule){
+            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName)) {
+                return true
+            }
+
+            return false
+        })
+	    return (
+	      <Modal {...this.props} bsStyle='primary' bsSize='large' title={obj.policyName} animation={false}>
+	        <div className='modal-body' style={ {margin: '5%',} }>
+				<Input type='text' label='Tenant Name' ref='tenantName' defaultValue={obj.tenantName} placeholder='Tenant Name' />
+                <Input type='text' label='Policy Name' ref='policyName' defaultValue={obj.policyName} placeholder='Policy Name' />
+			</div>
+            <div style={ {margin: '5%',} }>
+                <h3> Rules </h3>
+                <RuleSummaryView key="ruleSummary" rules={rules}/>
+            </div>
+	        <div className='modal-footer'>
+				<Button onClick={this.props.onRequestHide}>Close</Button>
+	        </div>
+	      </Modal>
+	    );
+  	}
+});
+
+var RuleModalView = contivModel.RuleModalView
+var RuleSummaryView = React.createClass({
+  	render: function() {
+		var self = this
+
+		// Walk thru all objects
+		var ruleListView = self.props.rules.map(function(rule){
+			return (
+				<ModalTrigger modal={<RuleModalView rule={ rule }/>}>
+					<tr key={ rule.key } className="info">
+                        <td>{ rule.ruleId }</td>
+                        <td>{ rule.priority }</td>
+						<td>{ rule.action }</td>
+						<td>{ rule.direction }</td>
+						<td>{ rule.endpointGroup }</td>
+                        <td>{ rule.ipAddress }</td>
+                        <td>{ rule.protocol }</td>
+						<td>{ rule.port }</td>
+					</tr>
+				</ModalTrigger>
+			);
+		});
+
+		return (
+        <div>
+			<Table hover>
+				<thead>
+					<tr>
+                        <th> Rule Id </th>
+                        <th> Priority </th>
+						<th> Action </th>
+						<th> Direction </th>
+						<th> Group </th>
+                        <th> IP Address </th>
+                        <th> Protocol </th>
+						<th> Port No </th>
+					</tr>
+				</thead>
+				<tbody>
+            		{ ruleListView }
+				</tbody>
+			</Table>
+        </div>
+    	);
+	}
+});
 var PolicyPane = React.createClass({
   	render: function() {
 		var self = this
@@ -11,7 +120,7 @@ var PolicyPane = React.createClass({
 			return <div> </div>
 		}
 
-        var PolicySummaryView = contivModel.PolicySummaryView
+        // var PolicySummaryView = contivModel.PolicySummaryView
         return (
             <div style={{margin: '5%',}}>
                 <PolicySummaryView key="policySummary" policys={self.props.policies}/>

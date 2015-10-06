@@ -239,7 +239,22 @@
 			var self = this
 
 			if (self.props.endpoints === undefined) {
-				return React.createElement("div", null, " ")
+	            return (
+	            React.createElement("div", {style: {margin: '5%',}}, 
+	    			React.createElement(Table, {hover: true}, 
+	    				React.createElement("thead", null, 
+	    					React.createElement("tr", null, 
+	    						React.createElement("th", null, "Host"), 
+	                            React.createElement("th", null, "Service"), 
+	    						React.createElement("th", null, "Network"), 
+	    						React.createElement("th", null, "IP address")
+	    					)
+	    				), 
+	    				React.createElement("tbody", null
+	    				)
+	    			)
+	            )
+	            );
 			}
 
 			// Walk thru all the endpoints
@@ -247,7 +262,7 @@
 				return (
 					React.createElement("tr", {key: ep.id, className: "info"}, 
 						React.createElement("td", null, ep.homingHost), 
-	                    React.createElement("td", null, ep.contName), 
+	                    React.createElement("td", null, ep.serviceName), 
 	                    React.createElement("td", null, ep.netID), 
 						React.createElement("td", null, ep.ipAddress)
 					)
@@ -261,7 +276,7 @@
 					React.createElement("thead", null, 
 						React.createElement("tr", null, 
 							React.createElement("th", null, "Host"), 
-	                        React.createElement("th", null, "Container"), 
+	                        React.createElement("th", null, "Service"), 
 							React.createElement("th", null, "Network"), 
 							React.createElement("th", null, "IP address")
 						)
@@ -271,7 +286,7 @@
 					)
 				)
 	        )
-	    );
+	        );
 		}
 	});
 
@@ -345,6 +360,115 @@
 
 	var contivModel = __webpack_require__(7)
 
+	var PolicySummaryView = React.createClass({displayName: "PolicySummaryView",
+	  	render: function() {
+			var self = this
+
+			// Walk thru all objects
+			var policyListView = self.props.policys.map(function(policy){
+				return (
+					React.createElement(ModalTrigger, {modal: React.createElement(PolicyModalView, {policy:  policy })}, 
+						React.createElement("tr", {key:  policy.key, className: "info"}, 
+							React.createElement("td", null,  policy.tenantName), 
+	                        React.createElement("td", null,  policy.policyName)
+						)
+					)
+				);
+			});
+
+			return (
+	        React.createElement("div", null, 
+				React.createElement(Table, {hover: true}, 
+					React.createElement("thead", null, 
+						React.createElement("tr", null, 
+							React.createElement("th", null, " Tenant Name "), 
+	                        React.createElement("th", null, " Policy Name ")
+						)
+					), 
+					React.createElement("tbody", null, 
+	            		 policyListView 
+					)
+				)
+	        )
+	    	);
+		}
+	});
+
+	var PolicyModalView = React.createClass({displayName: "PolicyModalView",
+		render:function() {
+			var obj = this.props.policy
+
+	        var rules = window.globalRules.filter(function(rule){
+	            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName)) {
+	                return true
+	            }
+
+	            return false
+	        })
+		    return (
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: obj.policyName, animation: false}), 
+		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
+					React.createElement(Input, {type: "text", label: "Tenant Name", ref: "tenantName", defaultValue: obj.tenantName, placeholder: "Tenant Name"}), 
+	                React.createElement(Input, {type: "text", label: "Policy Name", ref: "policyName", defaultValue: obj.policyName, placeholder: "Policy Name"})
+				), 
+	            React.createElement("div", {style:  {margin: '5%',} }, 
+	                React.createElement("h3", null, " Rules "), 
+	                React.createElement(RuleSummaryView, {key: "ruleSummary", rules: rules})
+	            ), 
+		        React.createElement("div", {className: "modal-footer"}, 
+					React.createElement(Button, {onClick: this.props.onRequestHide}, "Close")
+		        )
+		      )
+		    );
+	  	}
+	});
+
+	var RuleModalView = contivModel.RuleModalView
+	var RuleSummaryView = React.createClass({displayName: "RuleSummaryView",
+	  	render: function() {
+			var self = this
+
+			// Walk thru all objects
+			var ruleListView = self.props.rules.map(function(rule){
+				return (
+					React.createElement(ModalTrigger, {modal: React.createElement(RuleModalView, {rule:  rule })}, 
+						React.createElement("tr", {key:  rule.key, className: "info"}, 
+	                        React.createElement("td", null,  rule.ruleId), 
+	                        React.createElement("td", null,  rule.priority), 
+							React.createElement("td", null,  rule.action), 
+							React.createElement("td", null,  rule.direction), 
+							React.createElement("td", null,  rule.endpointGroup), 
+	                        React.createElement("td", null,  rule.ipAddress), 
+	                        React.createElement("td", null,  rule.protocol), 
+							React.createElement("td", null,  rule.port)
+						)
+					)
+				);
+			});
+
+			return (
+	        React.createElement("div", null, 
+				React.createElement(Table, {hover: true}, 
+					React.createElement("thead", null, 
+						React.createElement("tr", null, 
+	                        React.createElement("th", null, " Rule Id "), 
+	                        React.createElement("th", null, " Priority "), 
+							React.createElement("th", null, " Action "), 
+							React.createElement("th", null, " Direction "), 
+							React.createElement("th", null, " Group "), 
+	                        React.createElement("th", null, " IP Address "), 
+	                        React.createElement("th", null, " Protocol "), 
+							React.createElement("th", null, " Port No ")
+						)
+					), 
+					React.createElement("tbody", null, 
+	            		 ruleListView 
+					)
+				)
+	        )
+	    	);
+		}
+	});
 	var PolicyPane = React.createClass({displayName: "PolicyPane",
 	  	render: function() {
 			var self = this
@@ -353,7 +477,7 @@
 				return React.createElement("div", null, " ")
 			}
 
-	        var PolicySummaryView = contivModel.PolicySummaryView
+	        // var PolicySummaryView = contivModel.PolicySummaryView
 	        return (
 	            React.createElement("div", {style: {margin: '5%',}}, 
 	                React.createElement(PolicySummaryView, {key: "policySummary", policys: self.props.policies})
@@ -462,7 +586,7 @@
 		render:function() {
 			var obj = this.props.app
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New app", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "App", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -528,7 +652,7 @@
 		render:function() {
 			var obj = this.props.endpointGroup
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New endpointGroup", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "EndpointGroup", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -603,7 +727,7 @@
 		render:function() {
 			var obj = this.props.network
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New network", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Network", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -676,7 +800,7 @@
 		render:function() {
 			var obj = this.props.policy
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New policy", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Policy", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -703,9 +827,29 @@
 			var ruleListView = self.props.rules.map(function(rule){
 				return (
 					React.createElement(ModalTrigger, {modal: React.createElement(RuleModalView, {rule:  rule })}, 
-						React.createElement("tr", {key:  rule.key, className: "info"}
+						React.createElement("tr", {key:  rule.key, className: "info"}, 
 							
-							           
+							 
+							React.createElement("td", null,  rule.action), 
+							 
+							React.createElement("td", null,  rule.direction), 
+							 
+							React.createElement("td", null,  rule.endpointGroup), 
+							 
+							React.createElement("td", null,  rule.ipAddress), 
+							  
+							React.createElement("td", null,  rule.policyName), 
+							 
+							React.createElement("td", null,  rule.port), 
+							 
+							React.createElement("td", null,  rule.priority), 
+							 
+							React.createElement("td", null,  rule.protocol), 
+							 
+							React.createElement("td", null,  rule.ruleId), 
+							 
+							React.createElement("td", null,  rule.tenantName)
+							
 						)
 					)
 				);
@@ -715,9 +859,19 @@
 	        React.createElement("div", null, 
 				React.createElement(Table, {hover: true}, 
 					React.createElement("thead", null, 
-						React.createElement("tr", null
+						React.createElement("tr", null, 
 						
-						           
+						 
+							React.createElement("th", null, " Action "), 
+							React.createElement("th", null, " Direction "), 
+							React.createElement("th", null, " Group "), 
+							React.createElement("th", null, " IP Address "), 
+							React.createElement("th", null, " Policy Name "), 
+							React.createElement("th", null, " Port No "), 
+							React.createElement("th", null, " Priority "), 
+							React.createElement("th", null, " Protocol "), 
+							React.createElement("th", null, " Rule Id "), 
+							React.createElement("th", null, " Tenant Name ")
 						)
 					), 
 					React.createElement("tbody", null, 
@@ -733,29 +887,29 @@
 		render:function() {
 			var obj = this.props.rule
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New rule", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Rule", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
-					React.createElement(Input, {type: "text", label: "", ref: "action", defaultValue: obj.action, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Action", ref: "action", defaultValue: obj.action, placeholder: "Action"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "direction", defaultValue: obj.direction, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Direction", ref: "direction", defaultValue: obj.direction, placeholder: "Direction"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "endpointGroup", defaultValue: obj.endpointGroup, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Group", ref: "endpointGroup", defaultValue: obj.endpointGroup, placeholder: "Group"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "ipAddress", defaultValue: obj.ipAddress, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "IP Address", ref: "ipAddress", defaultValue: obj.ipAddress, placeholder: "IP Address"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "network", defaultValue: obj.network, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Network Name", ref: "network", defaultValue: obj.network, placeholder: "Network Name"}), 
 				
 					React.createElement(Input, {type: "text", label: "Policy Name", ref: "policyName", defaultValue: obj.policyName, placeholder: "Policy Name"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "port", defaultValue: obj.port, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Port No", ref: "port", defaultValue: obj.port, placeholder: "Port No"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "priority", defaultValue: obj.priority, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Priority", ref: "priority", defaultValue: obj.priority, placeholder: "Priority"}), 
 				
-					React.createElement(Input, {type: "text", label: "", ref: "protocol", defaultValue: obj.protocol, placeholder: ""}), 
+					React.createElement(Input, {type: "text", label: "Protocol", ref: "protocol", defaultValue: obj.protocol, placeholder: "Protocol"}), 
 				
-					React.createElement(Input, {type: "text", label: "Rule Name", ref: "ruleId", defaultValue: obj.ruleId, placeholder: "Rule Name"}), 
+					React.createElement(Input, {type: "text", label: "Rule Id", ref: "ruleId", defaultValue: obj.ruleId, placeholder: "Rule Id"}), 
 				
 					React.createElement(Input, {type: "text", label: "Tenant Name", ref: "tenantName", defaultValue: obj.tenantName, placeholder: "Tenant Name"})
 				
@@ -808,7 +962,7 @@
 		render:function() {
 			var obj = this.props.service
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New service", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Service", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -885,7 +1039,7 @@
 		render:function() {
 			var obj = this.props.serviceInstance
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New serviceInstance", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "ServiceInstance", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -948,7 +1102,7 @@
 		render:function() {
 			var obj = this.props.tenant
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New tenant", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Tenant", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -1013,7 +1167,7 @@
 		render:function() {
 			var obj = this.props.volume
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New volume", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Volume", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
@@ -1078,7 +1232,7 @@
 		render:function() {
 			var obj = this.props.volumeProfile
 		    return (
-		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "New volumeProfile", animation: false}), 
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "VolumeProfile", animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
 				
 				
