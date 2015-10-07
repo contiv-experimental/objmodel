@@ -247,7 +247,8 @@
 	    						React.createElement("th", null, "Host"), 
 	                            React.createElement("th", null, "Service"), 
 	    						React.createElement("th", null, "Network"), 
-	    						React.createElement("th", null, "IP address")
+	    						React.createElement("th", null, "IP address"), 
+	                            React.createElement("th", null, " Link ")
 	    					)
 	    				), 
 	    				React.createElement("tbody", null
@@ -259,12 +260,14 @@
 
 			// Walk thru all the endpoints
 			var epListView = self.props.endpoints.map(function(ep){
+	            var homeUrl = "/proxy/" + ep.ipAddress
 				return (
 					React.createElement("tr", {key: ep.id, className: "info"}, 
 						React.createElement("td", null, ep.homingHost), 
 	                    React.createElement("td", null, ep.serviceName), 
 	                    React.createElement("td", null, ep.netID), 
-						React.createElement("td", null, ep.ipAddress)
+						React.createElement("td", null, ep.ipAddress), 
+	                    React.createElement("td", null, " ", React.createElement("a", {href: homeUrl}, ep.ipAddress))
 					)
 				);
 			});
@@ -278,7 +281,8 @@
 							React.createElement("th", null, "Host"), 
 	                        React.createElement("th", null, "Service"), 
 							React.createElement("th", null, "Network"), 
-							React.createElement("th", null, "IP address")
+							React.createElement("th", null, "IP address"), 
+	                        React.createElement("th", null, " Link ")
 						)
 					), 
 					React.createElement("tbody", null, 

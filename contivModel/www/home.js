@@ -15,6 +15,7 @@ var HomePane = React.createClass({
                             <th>Service</th>
     						<th>Network</th>
     						<th>IP address</th>
+                            <th> Link </th>
     					</tr>
     				</thead>
     				<tbody>
@@ -26,12 +27,14 @@ var HomePane = React.createClass({
 
 		// Walk thru all the endpoints
 		var epListView = self.props.endpoints.map(function(ep){
+            var homeUrl = "/proxy/" + ep.ipAddress
 			return (
 				<tr key={ep.id} className="info">
 					<td>{ep.homingHost}</td>
                     <td>{ep.serviceName}</td>
                     <td>{ep.netID}</td>
 					<td>{ep.ipAddress}</td>
+                    <td> <a href={homeUrl}>{ep.ipAddress}</a></td>
 				</tr>
 			);
 		});
@@ -46,6 +49,7 @@ var HomePane = React.createClass({
                         <th>Service</th>
 						<th>Network</th>
 						<th>IP address</th>
+                        <th> Link </th>
 					</tr>
 				</thead>
 				<tbody>
