@@ -313,8 +313,6 @@
 			if (self.props.networks === undefined) {
 				return React.createElement("div", null, " ")
 			}
-
-	        var NetworkSummaryView = contivModel.NetworkSummaryView
 	        return (
 	            React.createElement("div", {style: {margin: '5%',}}, 
 	                React.createElement(NetworkSummaryView, {key: "NetworkSummary", networks: self.props.networks})
@@ -322,6 +320,68 @@
 	        );
 		}
 	});
+
+	var NetworkSummaryView = React.createClass({displayName: "NetworkSummaryView",
+	  	render: function() {
+			var self = this
+
+			// Walk thru all objects
+			var networkListView = self.props.networks.map(function(network){
+				return (
+					React.createElement(ModalTrigger, {modal: React.createElement(NetworkModalView, {network:  network })}, 
+						React.createElement("tr", {key:  network.key, className: "info"}, 
+	                        React.createElement("td", null,  network.networkName), 
+	                        React.createElement("td", null,  network.encap), 
+	                        React.createElement("td", null,  network.subnet), 
+	                        React.createElement("td", null,  network.defaultGw)
+
+						)
+					)
+				);
+			});
+
+			return (
+	        React.createElement("div", null, 
+				React.createElement(Table, {hover: true}, 
+					React.createElement("thead", null, 
+						React.createElement("tr", null, 
+	                        React.createElement("th", null, " Network name "), 
+	                        React.createElement("th", null, " Encapsulation "), 
+	                        React.createElement("th", null, " Subnet "), 
+							React.createElement("th", null, " Gateway ")
+						)
+					), 
+					React.createElement("tbody", null, 
+	            		 networkListView 
+					)
+				)
+	        )
+	    	);
+		}
+	});
+
+	var NetworkModalView = React.createClass({displayName: "NetworkModalView",
+		render:function() {
+			var obj = this.props.network
+		    return (
+		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: "Network", animation: false}), 
+		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
+	                React.createElement(Input, {type: "text", label: "Tenant Name", ref: "tenantName", defaultValue: obj.tenantName, placeholder: "Tenant Name"}), 
+	                React.createElement(Input, {type: "text", label: "Network name", ref: "networkName", defaultValue: obj.networkName, placeholder: "Network name"}), 
+					React.createElement(Input, {type: "text", label: "Encapsulation", ref: "encap", defaultValue: obj.encap, placeholder: "Encapsulation"}), 
+					React.createElement(Input, {type: "text", label: "Private network", ref: "isPrivate", defaultValue: obj.isPrivate, placeholder: "Private network"}), 
+					React.createElement(Input, {type: "text", label: "Public network", ref: "isPublic", defaultValue: obj.isPublic, placeholder: "Public network"}), 
+					React.createElement(Input, {type: "text", label: "Subnet", ref: "subnet", defaultValue: obj.subnet, placeholder: "Subnet"}), 
+	                React.createElement(Input, {type: "text", label: "Gateway", ref: "defaultGw", defaultValue: obj.defaultGw, placeholder: "Gateway"})
+				), 
+		        React.createElement("div", {className: "modal-footer"}, 
+					React.createElement(Button, {onClick: this.props.onRequestHide}, "Close")
+		        )
+		      )
+		    );
+	  	}
+	});
+
 
 	module.exports = NetworkPane
 
