@@ -110,6 +110,7 @@
 	      }.bind(this),
 	      error: function(xhr, status, err) {
 	        // console.error("/endpoints", status, err.toString());
+	        this.setState({endpoints: []});
 	      }.bind(this)
 	    });
 
