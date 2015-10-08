@@ -41,13 +41,26 @@ var PolicyModalView = React.createClass({
 	render() {
 		var obj = this.props.policy
 
-        var rules = window.globalRules.filter(function(rule){
-            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName)) {
+        // Create incoming rule list
+        var inRules = window.globalRules.filter(function(rule){
+            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName) &&
+                rule.direction == "in") {
+                return true
+            }
+
+            return false
+        });
+
+        // create outgoing rule List
+        var outRules = window.globalRules.filter(function(rule){
+            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName) &&
+                rule.direction == "out") {
                 return true
             }
 
             return false
         })
+
 	    return (
 	      <Modal {...this.props} bsStyle='primary' bsSize='large' title={obj.policyName} animation={false}>
 	        <div className='modal-body' style={ {margin: '5%',} }>
@@ -55,8 +68,12 @@ var PolicyModalView = React.createClass({
                 <Input type='text' label='Policy Name' ref='policyName' defaultValue={obj.policyName} placeholder='Policy Name' />
 			</div>
             <div style={ {margin: '5%',} }>
-                <h3> Rules </h3>
-                <RuleSummaryView key="ruleSummary" rules={rules}/>
+                <h3> Incoming Rules </h3>
+                <RuleSummaryView key="ruleSummary" rules={inRules} direction="in" />
+            </div>
+            <div style={ {margin: '5%',} }>
+                <h3> Outgoing Rules </h3>
+                <RuleSummaryView key="ruleSummary" rules={outRules} direction="out" />
             </div>
 	        <div className='modal-footer'>
 				<Button onClick={this.props.onRequestHide}>Close</Button>
@@ -73,13 +90,16 @@ var RuleSummaryView = React.createClass({
 
 		// Walk thru all objects
 		var ruleListView = self.props.rules.map(function(rule){
+            var action = "allow"
+            if (rule.action == "deny") {
+                action = "deny"
+            }
 			return (
 				<ModalTrigger modal={<RuleModalView rule={ rule }/>}>
 					<tr key={ rule.key } className="info">
                         <td>{ rule.ruleId }</td>
                         <td>{ rule.priority }</td>
-						<td>{ rule.action }</td>
-						<td>{ rule.direction }</td>
+						<td>{ action }</td>
 						<td>{ rule.endpointGroup }</td>
                         <td>{ rule.ipAddress }</td>
                         <td>{ rule.protocol }</td>
@@ -89,6 +109,14 @@ var RuleSummaryView = React.createClass({
 			);
 		});
 
+        // Set appropriate heading based on direction
+        var groupHdr = "From Group";
+        var ipHdr = "From IP Address"
+        if (self.props.direction == "out") {
+            groupHdr = "To Group"
+            ipHdr = "To IP Address"
+        }
+
 		return (
         <div>
 			<Table hover>
@@ -97,11 +125,10 @@ var RuleSummaryView = React.createClass({
                         <th> Rule Id </th>
                         <th> Priority </th>
 						<th> Action </th>
-						<th> Direction </th>
-						<th> Group </th>
-                        <th> IP Address </th>
+						<th> { groupHdr } </th>
+                        <th> { ipHdr } </th>
                         <th> Protocol </th>
-						<th> Port No </th>
+						<th> To Port </th>
 					</tr>
 				</thead>
 				<tbody>

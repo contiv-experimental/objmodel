@@ -8,7 +8,7 @@ var GroupsPane = require("./groups")
 var PolicyPane = require("./policy")
 var VolumesPane = require("./volumes")
 
-window.globalRefreshDelay = 300
+window.globalRefreshDelay = 2000
 
 // Define tabs
 var ControlledTabArea = React.createClass({

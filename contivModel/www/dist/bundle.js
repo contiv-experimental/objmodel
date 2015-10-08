@@ -72,7 +72,7 @@
 	var PolicyPane = __webpack_require__(5)
 	var VolumesPane = __webpack_require__(6)
 
-	window.globalRefreshDelay = 300
+	window.globalRefreshDelay = 2000
 
 	// Define tabs
 	var ControlledTabArea = React.createClass({displayName: "ControlledTabArea",
@@ -463,13 +463,26 @@
 		render:function() {
 			var obj = this.props.policy
 
-	        var rules = window.globalRules.filter(function(rule){
-	            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName)) {
+	        // Create incoming rule list
+	        var inRules = window.globalRules.filter(function(rule){
+	            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName) &&
+	                rule.direction == "in") {
+	                return true
+	            }
+
+	            return false
+	        });
+
+	        // create outgoing rule List
+	        var outRules = window.globalRules.filter(function(rule){
+	            if ((rule.tenantName == obj.tenantName) && (rule.policyName == obj.policyName) &&
+	                rule.direction == "out") {
 	                return true
 	            }
 
 	            return false
 	        })
+
 		    return (
 		      React.createElement(Modal, React.__spread({},  this.props, {bsStyle: "primary", bsSize: "large", title: obj.policyName, animation: false}), 
 		        React.createElement("div", {className: "modal-body", style:  {margin: '5%',} }, 
@@ -477,8 +490,12 @@
 	                React.createElement(Input, {type: "text", label: "Policy Name", ref: "policyName", defaultValue: obj.policyName, placeholder: "Policy Name"})
 				), 
 	            React.createElement("div", {style:  {margin: '5%',} }, 
-	                React.createElement("h3", null, " Rules "), 
-	                React.createElement(RuleSummaryView, {key: "ruleSummary", rules: rules})
+	                React.createElement("h3", null, " Incoming Rules "), 
+	                React.createElement(RuleSummaryView, {key: "ruleSummary", rules: inRules, direction: "in"})
+	            ), 
+	            React.createElement("div", {style:  {margin: '5%',} }, 
+	                React.createElement("h3", null, " Outgoing Rules "), 
+	                React.createElement(RuleSummaryView, {key: "ruleSummary", rules: outRules, direction: "out"})
 	            ), 
 		        React.createElement("div", {className: "modal-footer"}, 
 					React.createElement(Button, {onClick: this.props.onRequestHide}, "Close")
@@ -495,13 +512,16 @@
 
 			// Walk thru all objects
 			var ruleListView = self.props.rules.map(function(rule){
+	            var action = "allow"
+	            if (rule.action == "deny") {
+	                action = "deny"
+	            }
 				return (
 					React.createElement(ModalTrigger, {modal: React.createElement(RuleModalView, {rule:  rule })}, 
 						React.createElement("tr", {key:  rule.key, className: "info"}, 
 	                        React.createElement("td", null,  rule.ruleId), 
 	                        React.createElement("td", null,  rule.priority), 
-							React.createElement("td", null,  rule.action), 
-							React.createElement("td", null,  rule.direction), 
+							React.createElement("td", null,  action ), 
 							React.createElement("td", null,  rule.endpointGroup), 
 	                        React.createElement("td", null,  rule.ipAddress), 
 	                        React.createElement("td", null,  rule.protocol), 
@@ -511,6 +531,14 @@
 				);
 			});
 
+	        // Set appropriate heading based on direction
+	        var groupHdr = "From Group";
+	        var ipHdr = "From IP Address"
+	        if (self.props.direction == "out") {
+	            groupHdr = "To Group"
+	            ipHdr = "To IP Address"
+	        }
+
 			return (
 	        React.createElement("div", null, 
 				React.createElement(Table, {hover: true}, 
@@ -519,11 +547,10 @@
 	                        React.createElement("th", null, " Rule Id "), 
 	                        React.createElement("th", null, " Priority "), 
 							React.createElement("th", null, " Action "), 
-							React.createElement("th", null, " Direction "), 
-							React.createElement("th", null, " Group "), 
-	                        React.createElement("th", null, " IP Address "), 
+							React.createElement("th", null, " ",  groupHdr, " "), 
+	                        React.createElement("th", null, " ",  ipHdr, " "), 
 	                        React.createElement("th", null, " Protocol "), 
-							React.createElement("th", null, " Port No ")
+							React.createElement("th", null, " To Port ")
 						)
 					), 
 					React.createElement("tbody", null, 
