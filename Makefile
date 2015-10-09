@@ -2,7 +2,7 @@
 .PHONY: all build checks
 TO_BUILD := ./tools/modelgen/ ./objdb/ ./objdb/client/ ./objdb/plugins/ ./objdb/plugins/etcdClient/ ./contivModel/ ./contivModel/cmExample/
 
-all: test build
+all: build run-test
 
 godep:
 	@if [ -z "`which godep`" ]; then go get -v github.com/kr/godep; fi
@@ -38,8 +38,11 @@ test: build-docker
 clean:
 	rm -rf Godeps/_workspace/pkg
 
-host-test: etcd build
+run-test: 
 	godep go test -v ./...
+
+host-test: etcd build
+	make run-test
 	make clean
 
 reflex:

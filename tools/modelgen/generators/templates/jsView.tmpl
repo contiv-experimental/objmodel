@@ -39,7 +39,7 @@ var {{ initialCap .Name }}ModalView = React.createClass({
 	render() {
 		var obj = this.props.{{.Name}}
 	    return (
-	      <Modal {...this.props} bsStyle='primary' bsSize='large' title='New {{ .Name }}' animation={false}>
+	      <Modal {...this.props} bsStyle='primary' bsSize='large' title='{{ initialCap .Name }}' animation={false}>
 	        <div className='modal-body' style={ {margin: '5%',} }>
 			{{ $objName := .Name }}
 			{{range $element := .Properties }}
