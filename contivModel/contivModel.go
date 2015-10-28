@@ -1014,7 +1014,7 @@ func restoreEndpointGroup() error {
 // Validate a endpointGroup object
 func ValidateEndpointGroup(obj *EndpointGroup) error {
 	// Validate key is correct
-	keyStr := obj.TenantName + ":" + obj.GroupName
+	keyStr := obj.TenantName + ":" + obj.NetworkName + ":" + obj.GroupName
 	if obj.Key != keyStr {
 		log.Errorf("Expecting EndpointGroup Key: %s. Got: %s", keyStr, obj.Key)
 		return errors.New("Invalid Key")
