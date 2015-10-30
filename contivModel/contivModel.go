@@ -64,6 +64,7 @@ type Global struct {
 	// every object has a key
 	Key string `json:"key,omitempty"`
 
+	Name             string `json:"name,omitempty"`
 	NetworkInfraType string `json:"network-infra-type,omitempty"`
 }
 
@@ -1280,13 +1281,17 @@ func restoreGlobal() error {
 // Validate a global object
 func ValidateGlobal(obj *Global) error {
 	// Validate key is correct
-	keyStr := obj.NetworkInfraType
+	keyStr := obj.Name
 	if obj.Key != keyStr {
 		log.Errorf("Expecting Global Key: %s. Got: %s", keyStr, obj.Key)
 		return errors.New("Invalid Key")
 	}
 
 	// Validate each field
+
+	if len(obj.Name) > 64 {
+		return errors.New("name string too long")
+	}
 
 	if len(obj.NetworkInfraType) > 64 {
 		return errors.New("network-infra-type string too long")

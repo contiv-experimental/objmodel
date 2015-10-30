@@ -4,8 +4,14 @@
 		{
 			"name": "global",
 			"type": "object",
-			"key": [ "network-infra-type"],
+			"key": [ "name"],
 			"properties": {
+				"name": {
+					"type": "string",
+					"title": "name of this block",
+					"length": 64,
+					"ShowSummary": true
+				},
 				"network-infra-type": {
 					"type": "string",
 					"title": "Network infrastructure type",

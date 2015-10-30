@@ -142,6 +142,8 @@ var GlobalSummaryView = React.createClass({
 					<tr key={ global.key } className="info">
 						
 						 
+						<td>{ global.name }</td>
+						 
 						<td>{ global.network-infra-type }</td>
 						
 					</tr>
@@ -156,6 +158,7 @@ var GlobalSummaryView = React.createClass({
 					<tr>
 					
 					 
+						<th> name of this block </th>  
 						<th> Network infrastructure type </th> 
 					</tr>
 				</thead>
@@ -175,6 +178,8 @@ var GlobalModalView = React.createClass({
 	      <Modal {...this.props} bsStyle='primary' bsSize='large' title='Global' animation={false}>
 	        <div className='modal-body' style={ {margin: '5%',} }>
 			
+			
+				<Input type='text' label='name of this block' ref='name' defaultValue={obj.name} placeholder='name of this block' />
 			
 				<Input type='text' label='Network infrastructure type' ref='network-infra-type' defaultValue={obj.network-infra-type} placeholder='Network infrastructure type' />
 			
