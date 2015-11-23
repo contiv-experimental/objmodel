@@ -174,7 +174,6 @@ func Create{{ initialCap .Name }}(obj *{{ initialCap .Name }}) error {
 func Find{{ initialCap .Name }}(key string) *{{ initialCap .Name }} {
 	obj := collections.{{ .Name }}s[key]
 	if obj == nil {
-		log.Errorf("{{ .Name }} %s not found", key)
 		return nil
 	}
 
