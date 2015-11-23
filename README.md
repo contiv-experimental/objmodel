@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/contiv/objmodel/contivModel?status.png)](https://godoc.org/github.com/contiv/objmodel/contivModel)
+
 # Object Model
 Contiv Object model is defined as a JSON schema (based on http://json-schema.org) and various backend and client libraries are auto generated from the schema.
 
