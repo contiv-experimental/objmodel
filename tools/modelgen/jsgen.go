@@ -16,19 +16,12 @@ limitations under the License.
 package main
 
 import (
-	//"fmt"
-	//"errors"
-	//"strings"
-	//"regexp"
 	"bytes"
+
+	"text/template"
 
 	"github.com/contiv/objmodel/tools/modelgen/generators"
 	"github.com/contiv/objmodel/tools/modelgen/texthelpers"
-	//"unicode"
-	//"unicode/utf8"
-	"text/template"
-
-	//log "github.com/Sirupsen/logrus"
 )
 
 var funcMap = template.FuncMap{

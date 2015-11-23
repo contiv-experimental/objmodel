@@ -278,7 +278,6 @@ func CreateTenant(obj *Tenant) error {
 func FindTenant(key string) *Tenant {
 	obj := collections.tenants[key]
 	if obj == nil {
-		log.Errorf("tenant %s not found", key)
 		return nil
 	}
 
@@ -513,7 +512,6 @@ func CreateNetwork(obj *Network) error {
 func FindNetwork(key string) *Network {
 	obj := collections.networks[key]
 	if obj == nil {
-		log.Errorf("network %s not found", key)
 		return nil
 	}
 

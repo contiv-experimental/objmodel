@@ -109,4 +109,32 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Generate go client
+	outStr, err = schema.GenerateClient()
+	if err != nil {
+		log.Fatalf("Error generating go client. Err: %v", err)
+	}
+
+	// Write go client file
+	goClientFileName := path.Join(outPath, schema.Name+"Client.go")
+	fmt.Printf("Writing to file: %s\n", goClientFileName)
+	err = ioutil.WriteFile(goClientFileName, []byte(outStr), 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Generate python client
+	outStr, err = schema.GeneratePythonClient()
+	if err != nil {
+		log.Fatalf("Error generating go client. Err: %v", err)
+	}
+
+	// Write python file
+	pyClientFileName := path.Join(outPath, schema.Name+"Client.py")
+	fmt.Printf("Writing to file: %s\n", pyClientFileName)
+	err = ioutil.WriteFile(pyClientFileName, []byte(outStr), 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

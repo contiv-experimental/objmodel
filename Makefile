@@ -32,13 +32,13 @@ etcd:
 build-docker:
 	docker build -t objmodel .
 
-test: build-docker
+docker-test: build-docker
 	docker run --rm -v ${PWD}:/gopath/src/github.com/contiv/objmodel objmodel
 
 clean:
 	rm -rf Godeps/_workspace/pkg
 
-run-test: 
+test: 
 	godep go test -v ./...
 
 host-test: etcd build
