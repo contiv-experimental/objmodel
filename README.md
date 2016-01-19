@@ -1,3 +1,6 @@
+
+*DEPRECATED* Please use contiv/contivmodel repository for contiv object model. Use contiv/modelgen for modelgen tool and contiv/objdb for object database
+------------------
 [![GoDoc](https://godoc.org/github.com/contiv/objmodel/contivModel?status.png)](https://godoc.org/github.com/contiv/objmodel/contivModel)
 
 # Object Model
