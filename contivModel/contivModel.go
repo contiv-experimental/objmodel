@@ -68,6 +68,15 @@ type Global struct {
 	NetworkInfraType string `json:"network-infra-type,omitempty"`
 }
 
+type Bgp struct {
+	// every object has a key
+	Key string `json:"key,omitempty"`
+
+	AS       string `json:"AS,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Neighbor string `json:"neighbor,omitempty"`
+}
+
 type Network struct {
 	// every object has a key
 	Key string `json:"key,omitempty"`
@@ -272,6 +281,7 @@ type Collections struct {
 	apps             map[string]*App
 	endpointGroups   map[string]*EndpointGroup
 	globals          map[string]*Global
+	Bgps             map[string]*Bgp
 	networks         map[string]*Network
 	policys          map[string]*Policy
 	rules            map[string]*Rule
@@ -300,6 +310,12 @@ type GlobalCallbacks interface {
 	GlobalCreate(global *Global) error
 	GlobalUpdate(global, params *Global) error
 	GlobalDelete(global *Global) error
+}
+
+type BgpCallbacks interface {
+	BgpCreate(Bgp *Bgp) error
+	BgpUpdate(Bgp, params *Bgp) error
+	BgpDelete(Bgp *Bgp) error
 }
 
 type NetworkCallbacks interface {
@@ -354,6 +370,7 @@ type CallbackHandlers struct {
 	AppCb             AppCallbacks
 	EndpointGroupCb   EndpointGroupCallbacks
 	GlobalCb          GlobalCallbacks
+	BgpCb             BgpCallbacks
 	NetworkCb         NetworkCallbacks
 	PolicyCb          PolicyCallbacks
 	RuleCb            RuleCallbacks
@@ -370,6 +387,7 @@ func Init() {
 	collections.apps = make(map[string]*App)
 	collections.endpointGroups = make(map[string]*EndpointGroup)
 	collections.globals = make(map[string]*Global)
+	collections.Bgps = make(map[string]*Bgp)
 	collections.networks = make(map[string]*Network)
 	collections.policys = make(map[string]*Policy)
 	collections.rules = make(map[string]*Rule)
@@ -382,6 +400,7 @@ func Init() {
 	restoreApp()
 	restoreEndpointGroup()
 	restoreGlobal()
+	restoreBgp()
 	restoreNetwork()
 	restorePolicy()
 	restoreRule()
@@ -403,6 +422,10 @@ func RegisterEndpointGroupCallbacks(handler EndpointGroupCallbacks) {
 
 func RegisterGlobalCallbacks(handler GlobalCallbacks) {
 	objCallbackHandler.GlobalCb = handler
+}
+
+func RegisterBgpCallbacks(handler BgpCallbacks) {
+	objCallbackHandler.BgpCb = handler
 }
 
 func RegisterNetworkCallbacks(handler NetworkCallbacks) {
@@ -505,6 +528,16 @@ func AddRoutes(router *mux.Router) {
 	router.Path(route).Methods("POST").HandlerFunc(makeHttpHandler(httpCreateGlobal))
 	router.Path(route).Methods("PUT").HandlerFunc(makeHttpHandler(httpCreateGlobal))
 	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDeleteGlobal))
+
+	// Register Bgp
+	route = "/api/Bgps/{key}/"
+	listRoute = "/api/Bgps/"
+	log.Infof("Registering %s", route)
+	router.Path(listRoute).Methods("GET").HandlerFunc(makeHttpHandler(httpListBgps))
+	router.Path(route).Methods("GET").HandlerFunc(makeHttpHandler(httpGetBgp))
+	router.Path(route).Methods("POST").HandlerFunc(makeHttpHandler(httpCreateBgp))
+	router.Path(route).Methods("PUT").HandlerFunc(makeHttpHandler(httpCreateBgp))
+	router.Path(route).Methods("DELETE").HandlerFunc(makeHttpHandler(httpDeleteBgp))
 
 	// Register network
 	route = "/api/networks/{key}/"
@@ -712,6 +745,7 @@ func CreateApp(obj *App) error {
 func FindApp(key string) *App {
 	obj := collections.apps[key]
 	if obj == nil {
+		log.Errorf("app %s not found", key)
 		return nil
 	}
 
@@ -946,6 +980,7 @@ func CreateEndpointGroup(obj *EndpointGroup) error {
 func FindEndpointGroup(key string) *EndpointGroup {
 	obj := collections.endpointGroups[key]
 	if obj == nil {
+		log.Errorf("endpointGroup %s not found", key)
 		return nil
 	}
 
@@ -1180,6 +1215,7 @@ func CreateGlobal(obj *Global) error {
 func FindGlobal(key string) *Global {
 	obj := collections.globals[key]
 	if obj == nil {
+		log.Errorf("global %s not found", key)
 		return nil
 	}
 
@@ -1293,6 +1329,253 @@ func ValidateGlobal(obj *Global) error {
 
 	if len(obj.NetworkInfraType) > 64 {
 		return errors.New("network-infra-type string too long")
+	}
+
+	return nil
+}
+
+// LIST REST call
+func httpListBgps(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpListBgps: %+v", vars)
+
+	list := make([]*Bgp, 0)
+	for _, obj := range collections.Bgps {
+		list = append(list, obj)
+	}
+
+	// Return the list
+	return list, nil
+}
+
+// GET REST call
+func httpGetBgp(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpGetBgp: %+v", vars)
+
+	key := vars["key"]
+
+	obj := collections.Bgps[key]
+	if obj == nil {
+		log.Errorf("Bgp %s not found", key)
+		return nil, errors.New("Bgp not found")
+	}
+
+	// Return the obj
+	return obj, nil
+}
+
+// CREATE REST call
+func httpCreateBgp(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpGetBgp: %+v", vars)
+
+	var obj Bgp
+	key := vars["key"]
+
+	// Get object from the request
+	err := json.NewDecoder(r.Body).Decode(&obj)
+	if err != nil {
+		log.Errorf("Error decoding Bgp create request. Err %v", err)
+		return nil, err
+	}
+
+	// set the key
+	obj.Key = key
+
+	// Create the object
+	err = CreateBgp(&obj)
+	if err != nil {
+		log.Errorf("CreateBgp error for: %+v. Err: %v", obj, err)
+		return nil, err
+	}
+
+	// Return the obj
+	return obj, nil
+}
+
+// DELETE rest call
+func httpDeleteBgp(w http.ResponseWriter, r *http.Request, vars map[string]string) (interface{}, error) {
+	log.Debugf("Received httpDeleteBgp: %+v", vars)
+
+	key := vars["key"]
+
+	// Delete the object
+	err := DeleteBgp(key)
+	if err != nil {
+		log.Errorf("DeleteBgp error for: %s. Err: %v", key, err)
+		return nil, err
+	}
+
+	// Return the obj
+	return key, nil
+}
+
+// Create a Bgp object
+func CreateBgp(obj *Bgp) error {
+	// Validate parameters
+	err := ValidateBgp(obj)
+	if err != nil {
+		log.Errorf("ValidateBgp retruned error for: %+v. Err: %v", obj, err)
+		return err
+	}
+
+	// Check if we handle this object
+	if objCallbackHandler.BgpCb == nil {
+		log.Errorf("No callback registered for Bgp object")
+		return errors.New("Invalid object type")
+	}
+
+	// Check if object already exists
+	if collections.Bgps[obj.Key] != nil {
+		// Perform Update callback
+		err = objCallbackHandler.BgpCb.BgpUpdate(collections.Bgps[obj.Key], obj)
+		if err != nil {
+			log.Errorf("BgpUpdate retruned error for: %+v. Err: %v", obj, err)
+			return err
+		}
+	} else {
+		// save it in cache
+		collections.Bgps[obj.Key] = obj
+
+		// Perform Create callback
+		err = objCallbackHandler.BgpCb.BgpCreate(obj)
+		if err != nil {
+			log.Errorf("BgpCreate retruned error for: %+v. Err: %v", obj, err)
+			delete(collections.Bgps, obj.Key)
+			return err
+		}
+	}
+
+	// Write it to modeldb
+	err = obj.Write()
+	if err != nil {
+		log.Errorf("Error saving Bgp %s to db. Err: %v", obj.Key, err)
+		return err
+	}
+
+	return nil
+}
+
+// Return a pointer to Bgp from collection
+func FindBgp(key string) *Bgp {
+	obj := collections.Bgps[key]
+	if obj == nil {
+		log.Errorf("Bgp %s not found", key)
+		return nil
+	}
+
+	return obj
+}
+
+// Delete a Bgp object
+func DeleteBgp(key string) error {
+	obj := collections.Bgps[key]
+	if obj == nil {
+		log.Errorf("Bgp %s not found", key)
+		return errors.New("Bgp not found")
+	}
+
+	// Check if we handle this object
+	if objCallbackHandler.BgpCb == nil {
+		log.Errorf("No callback registered for Bgp object")
+		return errors.New("Invalid object type")
+	}
+
+	// Perform callback
+	err := objCallbackHandler.BgpCb.BgpDelete(obj)
+	if err != nil {
+		log.Errorf("BgpDelete retruned error for: %+v. Err: %v", obj, err)
+		return err
+	}
+
+	// delete it from modeldb
+	err = obj.Delete()
+	if err != nil {
+		log.Errorf("Error deleting Bgp %s. Err: %v", obj.Key, err)
+	}
+
+	// delete it from cache
+	delete(collections.Bgps, key)
+
+	return nil
+}
+
+func (self *Bgp) GetType() string {
+	return "Bgp"
+}
+
+func (self *Bgp) GetKey() string {
+	return self.Key
+}
+
+func (self *Bgp) Read() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to read Bgp object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.ReadObj("Bgp", self.Key, self)
+}
+
+func (self *Bgp) Write() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to Write Bgp object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.WriteObj("Bgp", self.Key, self)
+}
+
+func (self *Bgp) Delete() error {
+	if self.Key == "" {
+		log.Errorf("Empty key while trying to Delete Bgp object")
+		return errors.New("Empty key")
+	}
+
+	return modeldb.DeleteObj("Bgp", self.Key)
+}
+
+func restoreBgp() error {
+	strList, err := modeldb.ReadAllObj("Bgp")
+	if err != nil {
+		log.Errorf("Error reading Bgp list. Err: %v", err)
+	}
+
+	for _, objStr := range strList {
+		// Parse the json model
+		var Bgp Bgp
+		err = json.Unmarshal([]byte(objStr), &Bgp)
+		if err != nil {
+			log.Errorf("Error parsing object %s, Err %v", objStr, err)
+			return err
+		}
+
+		// add it to the collection
+		collections.Bgps[Bgp.Key] = &Bgp
+	}
+
+	return nil
+}
+
+// Validate a Bgp object
+func ValidateBgp(obj *Bgp) error {
+	// Validate key is correct
+	keyStr := obj.Name
+	if obj.Key != keyStr {
+		log.Errorf("Expecting Bgp Key: %s. Got: %s", keyStr, obj.Key)
+		return errors.New("Invalid Key")
+	}
+
+	// Validate each field
+
+	if len(obj.AS) > 64 {
+		return errors.New("AS string too long")
+	}
+
+	if len(obj.Name) > 256 {
+		return errors.New("name string too long")
+	}
+
+	if len(obj.Neighbor) > 15 {
+		return errors.New("neighbor string too long")
 	}
 
 	return nil
@@ -1422,6 +1705,7 @@ func CreateNetwork(obj *Network) error {
 func FindNetwork(key string) *Network {
 	obj := collections.networks[key]
 	if obj == nil {
+		log.Errorf("network %s not found", key)
 		return nil
 	}
 
@@ -1679,6 +1963,7 @@ func CreatePolicy(obj *Policy) error {
 func FindPolicy(key string) *Policy {
 	obj := collections.policys[key]
 	if obj == nil {
+		log.Errorf("policy %s not found", key)
 		return nil
 	}
 
@@ -1913,6 +2198,7 @@ func CreateRule(obj *Rule) error {
 func FindRule(key string) *Rule {
 	obj := collections.rules[key]
 	if obj == nil {
+		log.Errorf("rule %s not found", key)
 		return nil
 	}
 
@@ -2198,6 +2484,7 @@ func CreateService(obj *Service) error {
 func FindService(key string) *Service {
 	obj := collections.services[key]
 	if obj == nil {
+		log.Errorf("service %s not found", key)
 		return nil
 	}
 
@@ -2432,6 +2719,7 @@ func CreateServiceInstance(obj *ServiceInstance) error {
 func FindServiceInstance(key string) *ServiceInstance {
 	obj := collections.serviceInstances[key]
 	if obj == nil {
+		log.Errorf("serviceInstance %s not found", key)
 		return nil
 	}
 
@@ -2666,6 +2954,7 @@ func CreateTenant(obj *Tenant) error {
 func FindTenant(key string) *Tenant {
 	obj := collections.tenants[key]
 	if obj == nil {
+		log.Errorf("tenant %s not found", key)
 		return nil
 	}
 
@@ -2931,6 +3220,7 @@ func CreateVolume(obj *Volume) error {
 func FindVolume(key string) *Volume {
 	obj := collections.volumes[key]
 	if obj == nil {
+		log.Errorf("volume %s not found", key)
 		return nil
 	}
 
@@ -3165,6 +3455,7 @@ func CreateVolumeProfile(obj *VolumeProfile) error {
 func FindVolumeProfile(key string) *VolumeProfile {
 	obj := collections.volumeProfiles[key]
 	if obj == nil {
+		log.Errorf("volumeProfile %s not found", key)
 		return nil
 	}
 
